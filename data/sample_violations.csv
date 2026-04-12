@@ -1,0 +1,3 @@
+date_jugement,etablissement,proprietaire,rue,categorie,description,montant,statut,ville
+2024-01-15,Restaurant Test,Jean Tremblay,Boulevard Rosemont,Restaurant,Infraction test,250.00,Paye,Montreal
+2024-01-16,Boulangerie Demo,Marie Gagnon,Rue Saint-Denis,Boulangerie,Autre infraction,100.00,En attente,Montreal

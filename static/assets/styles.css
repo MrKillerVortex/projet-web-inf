@@ -1,0 +1,132 @@
+:root {
+  --bg0: #0b1020;
+  --bg1: #0f1b2d;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: rgba(15, 23, 42, 0.72);
+  --teal: #009688;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(1200px 700px at 15% 0%, rgba(0, 150, 136, 0.20), transparent 60%),
+    radial-gradient(900px 700px at 85% 10%, rgba(255, 193, 7, 0.14), transparent 55%),
+    linear-gradient(180deg, #f6f8fb 0%, #eef2f7 100%);
+}
+
+.hero {
+  background:
+    radial-gradient(800px 420px at 10% 20%, rgba(0, 150, 136, 0.25), transparent 55%),
+    radial-gradient(900px 500px at 80% 0%, rgba(3, 169, 244, 0.16), transparent 58%),
+    linear-gradient(135deg, var(--bg0) 0%, var(--bg1) 60%, #11263d 100%);
+  color: #e7eef7;
+}
+
+.hero .w3-opacity {
+  color: rgba(231, 238, 247, 0.75);
+}
+
+.hero-title {
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.hero-subtitle {
+  max-width: 70ch;
+  color: rgba(231, 238, 247, 0.82);
+}
+
+.w3-card {
+  box-shadow: var(--shadow);
+  border-radius: 10px;
+}
+
+.w3-card.w3-padding {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  background: linear-gradient(180deg, #ffffff 0%, #f6faf9 100%);
+  border: 1px solid rgba(0, 150, 136, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-value {
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.mini-bars {
+  display: grid;
+  gap: 8px;
+}
+
+.mini-bar {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 10px;
+  align-items: center;
+}
+
+.mini-bar-label {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.10);
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 150, 136, 0.95) 0%, rgba(0, 150, 136, 0.55) 100%);
+  border-radius: 999px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+table th, table td {
+  vertical-align: top;
+}
+
+td.w3-right-align, th.w3-right-align {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

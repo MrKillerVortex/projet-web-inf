@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Resultats de recherche</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <style>
+    html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+    .w3-card { border-radius: 10px; }
+    .kv td:first-child { white-space: nowrap; color: rgba(15,23,42,.72); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  </style>
+</head>
+<body class="w3-light-grey">
+
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
+      <a href="/search" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Recherche</a>
+    </div>
+  </div>
+
+  <div class="w3-content" style="max-width:1100px; margin-top:72px;">
+    <div class="w3-card w3-white w3-padding-large">
+      <h1 class="w3-text-teal">Resultats</h1>
+      <p class="w3-small w3-opacity">
+        Filtres:
+        etablissement=<span class="mono">{{ establishment or "-" }}</span>,
+        proprietaire=<span class="mono">{{ owner or "-" }}</span>,
+        rue=<span class="mono">{{ street or "-" }}</span>
+      </p>
+
+      {% if no_criteria %}
+        <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-yellow">
+          <p>Entre au moins un critere de recherche (etablissement, proprietaire ou rue).</p>
+        </div>
+      {% elif results|length == 0 %}
+        <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-yellow">
+          <p>Aucun resultat.</p>
+        </div>
+      {% else %}
+        <div class="w3-panel w3-pale-blue w3-leftbar w3-border-blue">
+          <p>{{ results|length }} contravention(s) affichee(s).</p>
+        </div>
+
+        {% for r in results %}
+          <div class="w3-card w3-white w3-padding w3-margin-top" style="border:1px solid rgba(15,23,42,.08);">
+            <h3 class="w3-text-teal" style="margin-top:0;">
+              {{ r.establishment or "Etablissement (inconnu)" }}
+            </h3>
+            <p class="w3-small w3-opacity">
+              Date: <span class="mono">{{ r.date or "-" }}</span>
+              | Ville: <span class="mono">{{ r.city or "-" }}</span>
+              | Montant: <span class="mono">{{ "%.2f"|format(r.amount or 0) }}</span>
+              | Statut: <span class="mono">{{ r.status or "-" }}</span>
+            </p>
+            <p><b>Categorie:</b> {{ r.category or "-" }}</p>
+            <p><b>Proprietaire:</b> {{ r.owner or "-" }}</p>
+            <p><b>Rue:</b> {{ r.street or "-" }}</p>
+            <p><b>Description:</b> {{ r.description or "-" }}</p>
+
+            <details class="w3-margin-top">
+              <summary class="w3-small">Afficher toutes les donnees disponibles</summary>
+              <div class="w3-margin-top">
+                <table class="w3-table w3-striped w3-small kv">
+                  <tbody>
+                    {% for k, v in r.raw|dictsort %}
+                      <tr>
+                        <td class="mono">{{ k }}</td>
+                        <td>{{ v }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+</body>
+</html>

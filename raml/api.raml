@@ -1,0 +1,88 @@
+#%RAML 1.0
+title: Service des contrevenants (inspections alimentaires)
+version: v1
+baseUri: http://127.0.0.1:5000
+mediaType: application/json
+
+types:
+  Contrevenant:
+    type: object
+    properties:
+      id: integer
+      date: string
+      establishment: string
+      owner: string
+      street: string
+      category: string
+      description: string
+      amount: number
+      status: string
+      city: string
+      raw: object
+
+/contrevenants:
+  get:
+    description: Liste des contraventions entre deux dates ISO 8601 (YYYY-MM-DD), inclusive.
+    queryParameters:
+      du:
+        type: string
+        required: true
+        example: "2022-05-08"
+      au:
+        type: string
+        required: true
+        example: "2024-05-15"
+      mode:
+        type: string
+        required: false
+        description: "Optionnel: 'counts' pour retourner {establishment,count} au lieu de la liste detaillee."
+        example: "counts"
+      limit:
+        type: integer
+        required: false
+        example: 5000
+    responses:
+      200:
+        body:
+          application/json:
+            type: Contrevenant[]
+      400:
+        body:
+          application/json:
+            example: { "error": "Parametres invalides. Utilise du=YYYY-MM-DD&au=YYYY-MM-DD (ISO 8601)." }
+
+/restaurants:
+  get:
+    description: Liste distincte des etablissements (pour une liste deroulante cote client).
+    queryParameters:
+      limit:
+        type: integer
+        required: false
+        example: 20000
+    responses:
+      200:
+        body:
+          application/json:
+            type: string[]
+
+/infractions:
+  get:
+    description: Liste des contraventions (infractions) pour un etablissement.
+    queryParameters:
+      etablissement:
+        type: string
+        required: true
+        example: "Restaurant Test"
+      limit:
+        type: integer
+        required: false
+        example: 2000
+    responses:
+      200:
+        body:
+          application/json:
+            type: Contrevenant[]
+      400:
+        body:
+          application/json:
+            example: { "error": "Parametre requis: etablissement" }

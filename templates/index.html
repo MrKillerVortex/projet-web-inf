@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Contrevenants alimentaires (Montreal)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/styles.css') }}">
+  <style>
+    html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+    .w3-sidebar {
+      z-index: 3;
+      width: 250px;
+      top: 43px;
+      bottom: 0;
+      height: inherit;
+    }
+    .hint { color: rgba(15,23,42,.72); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
+      <a href="#accueil" class="w3-bar-item w3-button w3-theme-l1">INF5190</a>
+      <a href="#recherche" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Recherche</a>
+      <a href="#dates" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Dates</a>
+      <a href="#restaurant" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Restaurant</a>
+      <a href="/doc" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Doc</a>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="mySidebar">
+    <a href="javascript:void(0)" onclick="w3_close()" class="w3-right w3-xlarge w3-padding-large w3-hover-black w3-hide-large" title="Fermer">
+      <i class="fa fa-remove"></i>
+    </a>
+    <h4 class="w3-bar-item"><b>Menu</b></h4>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#accueil" onclick="w3_close()">Accueil</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#contexte" onclick="w3_close()">Contexte</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#recherche" onclick="w3_close()">Recherche</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#dates" onclick="w3_close()">Recherche (dates)</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#restaurant" onclick="w3_close()">Recherche (restaurant)</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#donnees" onclick="w3_close()">Donnees</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="/doc" onclick="w3_close()">Doc RAML</a>
+  </nav>
+
+  <!-- Overlay effect when opening sidebar on small screens -->
+  <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="Fermer le menu" id="myOverlay"></div>
+
+  <!-- Main content -->
+  <div class="w3-main" style="margin-left:250px">
+
+    <header id="accueil" class="hero w3-container w3-padding-64">
+      <div class="w3-content">
+        <p class="w3-opacity">Projet de session</p>
+        <h1 class="w3-text-teal hero-title">Constats d'infraction lors d'inspections alimentaires</h1>
+        <p class="hero-subtitle">Ville de Montreal. Donnees ouvertes. Flask + SQLite. Recherche et services REST.</p>
+        <div class="w3-row-padding w3-margin-top">
+          <div class="w3-half">
+            <a class="w3-button w3-teal w3-block w3-padding-large" href="#recherche"><i class="fa fa-search w3-margin-right"></i>Aller a la recherche</a>
+          </div>
+          <div class="w3-half">
+            <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/doc"><i class="fa fa-file-text-o w3-margin-right"></i>Voir la doc RAML</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="contexte" class="w3-container w3-padding-64">
+        <div class="w3-content">
+          <h2 class="w3-text-teal">Contexte</h2>
+          <p>Application Flask pour consulter des donnees ouvertes de la Ville de Montreal: etablissements ayant recu des constats d'infraction lors d'inspections alimentaires. Les donnees sont stockees dans SQLite et exposees via des services REST.</p>
+          <div class="w3-row-padding w3-margin-top">
+            <div class="w3-half">
+              <div class="w3-card w3-padding">
+                <h3 class="w3-text-teal"><i class="fa fa-database w3-margin-right"></i>Base SQLite</h3>
+                <p class="hint">Schema: <span class="mono">db/db.sql</span>. DB vide fournie: <span class="mono">db/violations_empty.sqlite3</span>.</p>
+              </div>
+            </div>
+            <div class="w3-half">
+              <div class="w3-card w3-padding">
+                <h3 class="w3-text-teal"><i class="fa fa-link w3-margin-right"></i>Services</h3>
+                <ul class="w3-ul">
+                  <li>Recherche classique (page <span class="mono">/search</span>)</li>
+                  <li>REST par dates: <span class="mono">/contrevenants?du=...&amp;au=...</span></li>
+                  <li>Dropdown restaurants + infractions: <span class="mono">/restaurants</span>, <span class="mono">/infractions</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="recherche" class="w3-container w3-padding-64">
+        <div class="w3-content">
+          <h2 class="w3-text-teal">Recherche</h2>
+          <p class="hint">Recherche par nom d'etablissement, proprietaire et rue. Les resultats s'affichent sur une nouvelle page.</p>
+
+          {% if not db_ready %}
+            <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
+              <p><b>Base de donnees non prete.</b></p>
+              <p class="w3-small">{{ db_reason }}</p>
+              <p class="w3-small">
+                Etapes typiques:
+                1) creer la DB avec <span class="mono">db/db.sql</span>
+                2) importer avec <span class="mono">python import_violations.py --db ...</span>
+              </p>
+            </div>
+          {% endif %}
+
+          <div class="w3-card w3-padding w3-margin-top">
+            <form class="w3-container" method="get" action="/search">
+              <div class="w3-row-padding">
+                <div class="w3-third">
+                  <label for="establishment"><b>Nom d'etablissement</b></label>
+                  <input class="w3-input w3-border" id="establishment" name="establishment" type="text" placeholder="Ex: Restaurant, Boulangerie, Nom exact">
+                </div>
+                <div class="w3-third">
+                  <label for="owner"><b>Proprietaire</b></label>
+                  <input class="w3-input w3-border" id="owner" name="owner" type="text" placeholder="Ex: Nom du proprietaire">
+                </div>
+                <div class="w3-third">
+                  <label for="street"><b>Rue</b></label>
+                  <input class="w3-input w3-border" id="street" name="street" type="text" placeholder="Ex: boulevard Rosemont">
+                </div>
+              </div>
+              <button class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
+                Rechercher
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="dates" class="w3-container w3-padding-64">
+        <div class="w3-content">
+          <h2 class="w3-text-teal">Recherche rapide (dates)</h2>
+          <p class="hint w3-small">Ajax vers <span class="mono">/contrevenants</span> (mode <span class="mono">counts</span>). Tableau: etablissement + nombre de contraventions.</p>
+
+          <div class="w3-card w3-padding w3-margin-top">
+            <form id="quickDatesForm" class="w3-container">
+              <div class="w3-row-padding">
+                <div class="w3-half">
+                  <label for="du"><b>Du</b></label>
+                  <input class="w3-input w3-border" id="du" name="du" type="date" {% if not db_ready %}disabled{% endif %}>
+                </div>
+                <div class="w3-half">
+                  <label for="au"><b>Au</b></label>
+                  <input class="w3-input w3-border" id="au" name="au" type="date" {% if not db_ready %}disabled{% endif %}>
+                </div>
+              </div>
+              <button id="quickSubmit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
+                Chercher
+              </button>
+              <span id="quickStatus" class="w3-small w3-margin-left hint"></span>
+            </form>
+
+            <div id="quickResultsWrap" class="w3-margin-top" style="display:none;">
+              <div class="table-wrap">
+                <table class="w3-table w3-striped w3-small">
+                  <thead>
+                    <tr class="w3-theme-l4">
+                      <th>Etablissement</th>
+                      <th class="w3-right-align">Nombre</th>
+                    </tr>
+                  </thead>
+                  <tbody id="quickResultsBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="restaurant" class="w3-container w3-padding-64">
+        <div class="w3-content">
+          <h2 class="w3-text-teal">Recherche par restaurant</h2>
+          <p class="hint w3-small">Liste deroulante (prechargee). Ajax vers <span class="mono">/infractions</span> pour afficher les infractions du restaurant.</p>
+
+          <div class="w3-card w3-padding w3-margin-top">
+            <form id="restaurantForm" class="w3-container">
+              <label for="restaurantSelect"><b>Restaurant</b></label>
+              <select id="restaurantSelect" class="w3-select w3-border" {% if not db_ready %}disabled{% endif %}>
+                <option value="">Chargement...</option>
+              </select>
+              <button id="restaurantSubmit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
+                Voir les infractions
+              </button>
+              <span id="restaurantStatus" class="w3-small w3-margin-left hint"></span>
+            </form>
+
+            <div id="restaurantResultsWrap" class="w3-margin-top" style="display:none;">
+              <div class="table-wrap">
+                <table class="w3-table w3-striped w3-small">
+                  <thead>
+                    <tr class="w3-theme-l4">
+                      <th>Date</th>
+                      <th>Categorie</th>
+                      <th>Description</th>
+                      <th class="w3-right-align">Montant</th>
+                      <th>Statut</th>
+                      <th>Ville</th>
+                    </tr>
+                  </thead>
+                  <tbody id="restaurantResultsBody"></tbody>
+                </table>
+              </div>
+              <details class="w3-margin-top">
+                <summary class="w3-small">Afficher les donnees completes (JSON)</summary>
+                <pre id="restaurantRaw" class="w3-small"></pre>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="donnees" class="w3-container w3-padding-64">
+        <div class="w3-content">
+          <h2 class="w3-text-teal">Donnees</h2>
+          <p class="hint">CSV officiel (telecharge par le script d'import ou la sync quotidienne).</p>
+          <div class="w3-card w3-padding w3-margin-top">
+            <p class="w3-small w3-opacity">
+              Source CSV:
+              <a href="https://data.montreal.ca/dataset/05a9e718-6810-4e73-8bb9-5955efeb91a0/resource/7f939a08-be8a-45e1-b208-d8744dca8fc6/download/violations.csv" target="_blank" rel="noopener">violations.csv</a>
+            </p>
+            <p class="w3-small w3-opacity">Doc API (RAML): <a href="/doc">/doc</a></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="myFooter">
+      <div class="w3-container w3-theme-l2 w3-padding-32">
+        <h4>INF5190 - Projet de session</h4>
+      </div>
+      <div class="w3-container w3-theme-l1">
+        <p>Template: <a href="https://www.w3schools.com/w3css/default.asp" target="_blank" rel="noopener">w3.css</a>. Donnees: <a href="https://data.montreal.ca/" target="_blank" rel="noopener">data.montreal.ca</a></p>
+      </div>
+    </footer>
+
+    <!-- END MAIN -->
+  </div>
+
+  <script>
+    // Sidebar handlers (W3Schools pattern)
+    var mySidebar = document.getElementById("mySidebar");
+    var overlayBg = document.getElementById("myOverlay");
+
+    function w3_open() {
+      if (mySidebar.style.display === 'block') {
+        mySidebar.style.display = 'none';
+        overlayBg.style.display = "none";
+      } else {
+        mySidebar.style.display = 'block';
+        overlayBg.style.display = "block";
+      }
+    }
+
+    function w3_close() {
+      mySidebar.style.display = "none";
+      overlayBg.style.display = "none";
+    }
+  </script>
+
+  <script>
+    (function () {
+      var form = document.getElementById('quickDatesForm');
+      if (!form) return;
+
+      var duEl = document.getElementById('du');
+      var auEl = document.getElementById('au');
+      var statusEl = document.getElementById('quickStatus');
+      var bodyEl = document.getElementById('quickResultsBody');
+      var wrapEl = document.getElementById('quickResultsWrap');
+      var btn = document.getElementById('quickSubmit');
+
+      function setStatus(text) {
+        if (statusEl) statusEl.textContent = text || '';
+      }
+
+      function clearTable() {
+        if (bodyEl) bodyEl.textContent = '';
+        if (wrapEl) wrapEl.style.display = 'none';
+      }
+
+      function renderRows(rows) {
+        bodyEl.textContent = '';
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var tr = document.createElement('tr');
+          var td1 = document.createElement('td');
+          td1.textContent = r.establishment || '(inconnu)';
+          var td2 = document.createElement('td');
+          td2.className = 'w3-right-align';
+          td2.textContent = String(r.count || 0);
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          bodyEl.appendChild(tr);
+        }
+        wrapEl.style.display = '';
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearTable();
+
+        var du = (duEl && duEl.value) ? duEl.value : '';
+        var au = (auEl && auEl.value) ? auEl.value : '';
+        if (!du || !au) {
+          setStatus('Entre deux dates.');
+          return;
+        }
+
+        btn.disabled = true;
+        setStatus('Requete en cours...');
+
+        var url = '/contrevenants?du=' + encodeURIComponent(du) + '&au=' + encodeURIComponent(au) + '&mode=counts&limit=5000';
+        fetch(url, { cache: 'no-store' })
+          .then(function (res) {
+            if (!res.ok) return res.json().catch(function () { return {}; }).then(function (j) {
+              throw new Error(j.error || ('HTTP ' + res.status));
+            });
+            return res.json();
+          })
+          .then(function (rows) {
+            if (!Array.isArray(rows)) rows = [];
+            setStatus(rows.length ? ('OK: ' + rows.length + ' etablissement(s).') : 'Aucun resultat.');
+            renderRows(rows);
+          })
+          .catch(function (err) {
+            setStatus('Erreur: ' + (err && err.message ? err.message : String(err)));
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var selectEl = document.getElementById('restaurantSelect');
+      var form = document.getElementById('restaurantForm');
+      if (!selectEl || !form) return;
+
+      var statusEl = document.getElementById('restaurantStatus');
+      var bodyEl = document.getElementById('restaurantResultsBody');
+      var wrapEl = document.getElementById('restaurantResultsWrap');
+      var rawEl = document.getElementById('restaurantRaw');
+      var btn = document.getElementById('restaurantSubmit');
+
+      function setStatus(text) {
+        if (statusEl) statusEl.textContent = text || '';
+      }
+
+      function resetResults() {
+        if (bodyEl) bodyEl.textContent = '';
+        if (rawEl) rawEl.textContent = '';
+        if (wrapEl) wrapEl.style.display = 'none';
+      }
+
+      function loadRestaurants() {
+        setStatus('Chargement des restaurants...');
+        fetch('/restaurants?limit=20000', { cache: 'no-store' })
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(function (items) {
+            if (!Array.isArray(items)) items = [];
+            selectEl.textContent = '';
+            var opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.textContent = items.length ? 'Choisir un restaurant' : 'Aucun restaurant';
+            selectEl.appendChild(opt0);
+            for (var i = 0; i < items.length; i++) {
+              var opt = document.createElement('option');
+              opt.value = items[i];
+              opt.textContent = items[i];
+              selectEl.appendChild(opt);
+            }
+            setStatus(items.length ? (items.length + ' restaurant(s).') : 'Aucun restaurant trouve.');
+          })
+          .catch(function (err) {
+            setStatus('Erreur: ' + (err && err.message ? err.message : String(err)));
+            selectEl.textContent = '';
+            var opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'Erreur de chargement';
+            selectEl.appendChild(opt);
+          });
+      }
+
+      function formatMoney(n) {
+        try {
+          return Number(n || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
+        } catch (_) {
+          return String(n || 0);
+        }
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        resetResults();
+
+        var est = selectEl.value || '';
+        if (!est) {
+          setStatus('Choisis un restaurant.');
+          return;
+        }
+
+        btn.disabled = true;
+        setStatus('Requete en cours...');
+
+        var url = '/infractions?etablissement=' + encodeURIComponent(est) + '&limit=2000';
+        fetch(url, { cache: 'no-store' })
+          .then(function (res) {
+            if (!res.ok) return res.json().catch(function () { return {}; }).then(function (j) {
+              throw new Error(j.error || ('HTTP ' + res.status));
+            });
+            return res.json();
+          })
+          .then(function (items) {
+            if (!Array.isArray(items)) items = [];
+            bodyEl.textContent = '';
+            for (var i = 0; i < items.length; i++) {
+              var r = items[i];
+              var tr = document.createElement('tr');
+              var tdDate = document.createElement('td'); tdDate.textContent = r.date || '';
+              var tdCat = document.createElement('td'); tdCat.textContent = r.category || '';
+              var tdDesc = document.createElement('td'); tdDesc.textContent = r.description || '';
+              var tdAmt = document.createElement('td'); tdAmt.className = 'w3-right-align'; tdAmt.textContent = formatMoney(r.amount);
+              var tdSt = document.createElement('td'); tdSt.textContent = r.status || '';
+              var tdCity = document.createElement('td'); tdCity.textContent = r.city || '';
+              tr.appendChild(tdDate); tr.appendChild(tdCat); tr.appendChild(tdDesc); tr.appendChild(tdAmt); tr.appendChild(tdSt); tr.appendChild(tdCity);
+              bodyEl.appendChild(tr);
+            }
+            wrapEl.style.display = '';
+            rawEl.textContent = JSON.stringify(items, null, 2);
+            setStatus(items.length ? ('OK: ' + items.length + ' infraction(s).') : 'Aucune infraction.');
+          })
+          .catch(function (err) {
+            setStatus('Erreur: ' + (err && err.message ? err.message : String(err)));
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      loadRestaurants();
+    })();
+  </script>
+
+</body>
+</html>
