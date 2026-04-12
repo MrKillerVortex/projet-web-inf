@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Profil</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/styles.css') }}">
+  <style>
+    html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+    .avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; background: #e7eef7; }
+  </style>
+</head>
+<body class="w3-light-grey">
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
+      <a href="/profil" class="w3-bar-item w3-button w3-hover-white">Profil</a>
+      <form method="post" action="/deconnexion" style="display:inline;">
+        <button class="w3-bar-item w3-button w3-hover-white" type="submit">Deconnexion</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="w3-content" style="max-width:980px; margin-top:72px;">
+    <div class="w3-card w3-white w3-padding-large">
+      <h1 class="w3-text-teal">Profil</h1>
+      <p class="w3-small w3-opacity">{{ user.full_name }} | {{ user.email }}</p>
+
+      {% if message %}
+      <div class="w3-panel w3-pale-green w3-leftbar w3-border-green">
+        <p>{{ message }}</p>
+      </div>
+      {% endif %}
+      {% if error %}
+      <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
+        <p>{{ error }}</p>
+      </div>
+      {% endif %}
+
+      <div class="w3-row-padding">
+        <div class="w3-third">
+          <div class="w3-card w3-padding">
+            <h3 class="w3-text-teal">Photo de profil</h3>
+            {% if user.profile_photo_mime %}
+            <img class="avatar" src="{{ url_for('profile_photo_view', user_id=user.id) }}" alt="Photo de profil">
+            {% else %}
+            <div class="avatar w3-display-container">
+              <div class="w3-display-middle w3-text-grey">Aucune photo</div>
+            </div>
+            {% endif %}
+
+            <form class="w3-margin-top" method="post" action="/profil/photo" enctype="multipart/form-data">
+              <input class="w3-input w3-border" type="file" name="photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
+              <button class="w3-button w3-teal w3-margin-top" type="submit">Televerser</button>
+            </form>
+            <p class="w3-small w3-opacity">Formats acceptes: JPG, PNG</p>
+          </div>
+        </div>
+
+        <div class="w3-twothird">
+          <div class="w3-card w3-padding">
+            <h3 class="w3-text-teal">Etablissements a surveiller</h3>
+            <form method="post" action="/profil/watchlist">
+              <textarea class="w3-input w3-border" name="watchlist" rows="10" placeholder="Un etablissement par ligne">{% for item in user.watchlist %}{{ item }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+              <button class="w3-button w3-teal w3-margin-top" type="submit">Mettre a jour</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

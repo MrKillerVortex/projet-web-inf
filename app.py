@@ -1,9 +1,15 @@
 import os
 import atexit
+import hashlib
+import io
 import re
+import smtplib
 from pathlib import Path
+from email.message import EmailMessage
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, send_file, session, url_for
+from jsonschema import ValidationError, validate
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 import db as dbmod
 
@@ -17,8 +23,31 @@ except ModuleNotFoundError:
     CronTrigger = None
 
 
+USER_PROFILE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["nom_complet", "courriel", "etablissements_surveille", "mot_de_passe"],
+    "properties": {
+        "nom_complet": {"type": "string", "minLength": 1, "maxLength": 200},
+        "courriel": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 254,
+            "pattern": r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        },
+        "etablissements_surveille": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {"type": "string", "minLength": 1, "maxLength": 255},
+        },
+        "mot_de_passe": {"type": "string", "minLength": 8, "maxLength": 200},
+    },
+}
+
+
 def create_app() -> Flask:
     app = Flask(__name__, instance_relative_config=True)
+    app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
     # Use instance/ for sqlite (recommended by Flask).
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
@@ -28,9 +57,129 @@ def create_app() -> Flask:
     app.config["CSV_CACHE"] = os.path.join(app.root_path, "data", "violations.csv")
     app.config["SCHEDULER_ENABLED"] = os.environ.get("INF5190_SCHEDULER", "1") != "0"
     app.config["SCHEDULER_TZ"] = os.environ.get("INF5190_TZ", "America/Toronto")
+    app.config["SMTP_HOST"] = os.environ.get("SMTP_HOST", "")
+    app.config["SMTP_PORT"] = int(os.environ.get("SMTP_PORT", "587"))
+    app.config["SMTP_USERNAME"] = os.environ.get("SMTP_USERNAME", "")
+    app.config["SMTP_PASSWORD"] = os.environ.get("SMTP_PASSWORD", "")
+    app.config["SMTP_FROM"] = os.environ.get("SMTP_FROM", "")
+    app.config["SMTP_USE_TLS"] = os.environ.get("SMTP_USE_TLS", "1") != "0"
+    app.config["UNSUBSCRIBE_SALT"] = "unsubscribe-restaurant"
+    app.config["PUBLIC_BASE_URL"] = os.environ.get("PUBLIC_BASE_URL", "")
 
     def get_conn():
         return dbmod.connect(app.config["DATABASE"])
+
+    def current_user():
+        user_id = session.get("user_id")
+        if not user_id:
+            return None
+        conn = get_conn()
+        try:
+            return dbmod.get_user_by_id(conn, int(user_id))
+        finally:
+            conn.close()
+
+    def token_serializer() -> URLSafeTimedSerializer:
+        return URLSafeTimedSerializer(app.secret_key)
+
+    def build_unsubscribe_token(user_id: int, establishment: str) -> str:
+        return token_serializer().dumps(
+            {"user_id": user_id, "establishment": establishment},
+            salt=app.config["UNSUBSCRIBE_SALT"],
+        )
+
+    def parse_unsubscribe_token(token: str, max_age: int = 60 * 60 * 24 * 30) -> dict | None:
+        try:
+            return token_serializer().loads(
+                token,
+                salt=app.config["UNSUBSCRIBE_SALT"],
+                max_age=max_age,
+            )
+        except (BadSignature, SignatureExpired):
+            return None
+
+    def send_notification_email(to_email: str, subject: str, body: str) -> bool:
+        host = app.config.get("SMTP_HOST", "")
+        sender = app.config.get("SMTP_FROM", "")
+        if not host or not sender:
+            print(f"SMTP not configured; skipping email to {to_email}")
+            return False
+
+        msg = EmailMessage()
+        msg["From"] = sender
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.set_content(body)
+
+        port = int(app.config.get("SMTP_PORT", 587))
+        username = app.config.get("SMTP_USERNAME", "")
+        password = app.config.get("SMTP_PASSWORD", "")
+        use_tls = bool(app.config.get("SMTP_USE_TLS", True))
+
+        with smtplib.SMTP(host, port, timeout=30) as smtp:
+            smtp.ehlo()
+            if use_tls:
+                smtp.starttls()
+                smtp.ehlo()
+            if username:
+                smtp.login(username, password)
+            smtp.send_message(msg)
+        return True
+
+    def notify_watchers(new_items: list[dict]) -> None:
+        if not new_items:
+            return
+
+        establishments = [item["establishment"] for item in new_items if item.get("establishment")]
+        conn = get_conn()
+        try:
+            watchers = dbmod.get_watchers_for_establishments(conn, establishments)
+        finally:
+            conn.close()
+
+        grouped: dict[str, list[dict]] = {}
+        for item in new_items:
+            est = item.get("establishment", "").strip()
+            if not est or est not in watchers:
+                continue
+            grouped.setdefault(est, []).append(item)
+
+        for establishment, users in watchers.items():
+            entries = grouped.get(establishment, [])
+            if not entries:
+                continue
+            lines = []
+            for item in entries[:10]:
+                lines.append(
+                    f"- Date: {item.get('date_iso') or '-'} | Statut: {item.get('status') or '-'} | Montant: {item.get('amount') or 0}"
+                )
+            if len(entries) > 10:
+                lines.append(f"- ... et {len(entries) - 10} autre(s) contravention(s)")
+
+            subject = f"Nouveau contrevenant detecte: {establishment}"
+            for user in users:
+                token = build_unsubscribe_token(user["user_id"], establishment)
+                unsubscribe_url = ""
+                if app.config.get("PUBLIC_BASE_URL"):
+                    unsubscribe_url = (
+                        app.config["PUBLIC_BASE_URL"].rstrip("/")
+                        + url_for("unsubscribe_page", token=token)
+                    )
+                body = (
+                    f"Bonjour {user['full_name']},\n\n"
+                    f"De nouvelles contraventions ont ete detectees pour l'etablissement surveille '{establishment}'.\n\n"
+                    + "\n".join(lines)
+                    + (
+                        f"\n\nLien de desabonnement:\n{unsubscribe_url}"
+                        if unsubscribe_url
+                        else "\n\nLien de desabonnement indisponible (PUBLIC_BASE_URL non configure)."
+                    )
+                    + "\n\nCeci est un message automatique du systeme INF5190."
+                )
+                try:
+                    send_notification_email(user["email"], subject, body)
+                except Exception as exc:
+                    print(f"Email send failed for {user['email']}: {exc}")
 
     def ensure_database_bootstrap() -> None:
         """
@@ -109,9 +258,11 @@ def create_app() -> Flask:
 
         conn = get_conn()
         try:
+            new_items = dbmod.detect_new_violations(conn, cache_path)
             dbmod.refresh_from_csv(conn, cache_path)
         finally:
             conn.close()
+        notify_watchers(new_items)
 
     def start_scheduler() -> None:
         if not app.config.get("SCHEDULER_ENABLED", True):
@@ -145,7 +296,171 @@ def create_app() -> Flask:
     @app.get("/")
     def index():
         ready, reason = db_ready()
-        return render_template("index.html", db_ready=ready, db_reason=reason)
+        return render_template("index.html", db_ready=ready, db_reason=reason, user=current_user())
+
+    @app.get("/inscription")
+    def signup_page():
+        return render_template("signup.html", user=current_user())
+
+    @app.get("/connexion")
+    def login_page():
+        return render_template("login.html", error="", user=current_user())
+
+    @app.post("/connexion")
+    def login_submit():
+        email = (request.form.get("courriel", "") or "").strip()
+        password = request.form.get("mot_de_passe", "") or ""
+        conn = get_conn()
+        try:
+            user = dbmod.authenticate_user(conn, email, password)
+        finally:
+            conn.close()
+        if not user:
+            return render_template(
+                "login.html",
+                error="Courriel ou mot de passe invalide.",
+                user=current_user(),
+            ), 401
+        session["user_id"] = int(user["id"])
+        return redirect(url_for("profile_page"))
+
+    @app.post("/deconnexion")
+    def logout_submit():
+        session.clear()
+        return redirect(url_for("index"))
+
+    @app.get("/profil")
+    def profile_page():
+        user = current_user()
+        if not user:
+            return redirect(url_for("login_page"))
+        return render_template("profile.html", user=user, message="", error="")
+
+    @app.post("/profil/watchlist")
+    def profile_watchlist_submit():
+        user = current_user()
+        if not user:
+            return redirect(url_for("login_page"))
+
+        raw_text = request.form.get("watchlist", "") or ""
+        watchlist = [line.strip() for line in raw_text.splitlines()]
+        conn = get_conn()
+        try:
+            updated = dbmod.replace_user_watchlist(conn, int(user["id"]), watchlist)
+            refreshed_user = dbmod.get_user_by_id(conn, int(user["id"]))
+        finally:
+            conn.close()
+        return render_template(
+            "profile.html",
+            user=refreshed_user,
+            message=f"{len(updated)} etablissement(s) surveille(s) enregistres.",
+            error="",
+        )
+
+    @app.post("/profil/photo")
+    def profile_photo_submit():
+        user = current_user()
+        if not user:
+            return redirect(url_for("login_page"))
+
+        uploaded = request.files.get("photo")
+        if uploaded is None or uploaded.filename == "":
+            return render_template("profile.html", user=user, message="", error="Aucun fichier fourni."), 400
+
+        mime_type = (uploaded.mimetype or "").lower()
+        if mime_type not in {"image/jpeg", "image/png"}:
+            return render_template(
+                "profile.html",
+                user=user,
+                message="",
+                error="Formats acceptes: JPG et PNG.",
+            ), 400
+
+        photo_bytes = uploaded.read()
+        if not photo_bytes:
+            return render_template("profile.html", user=user, message="", error="Fichier vide."), 400
+
+        conn = get_conn()
+        try:
+            dbmod.save_user_photo(conn, int(user["id"]), photo_bytes, mime_type)
+            refreshed_user = dbmod.get_user_by_id(conn, int(user["id"]))
+        finally:
+            conn.close()
+        return render_template(
+            "profile.html",
+            user=refreshed_user,
+            message="Photo de profil enregistree.",
+            error="",
+        )
+
+    @app.get("/profil/photo/<int:user_id>")
+    def profile_photo_view(user_id: int):
+        conn = get_conn()
+        try:
+            payload = dbmod.get_user_photo(conn, user_id)
+        finally:
+            conn.close()
+        if not payload:
+            return ("Photo introuvable.", 404)
+        photo_bytes, mime_type = payload
+        return send_file(io.BytesIO(photo_bytes), mimetype=mime_type)
+
+    @app.get("/desabonnement")
+    def unsubscribe_page():
+        token = (request.args.get("token", "") or "").strip()
+        payload = parse_unsubscribe_token(token)
+        if not payload:
+            return render_template(
+                "unsubscribe.html",
+                valid=False,
+                token="",
+                establishment="",
+                email="",
+            ), 400
+
+        conn = get_conn()
+        try:
+            user = dbmod.get_user_by_id(conn, int(payload["user_id"]))
+        finally:
+            conn.close()
+        if not user:
+            return render_template(
+                "unsubscribe.html",
+                valid=False,
+                token="",
+                establishment="",
+                email="",
+            ), 404
+
+        return render_template(
+            "unsubscribe.html",
+            valid=True,
+            token=token,
+            establishment=payload["establishment"],
+            email=user["email"],
+        )
+
+    @app.delete("/api/desabonnement")
+    def unsubscribe_api():
+        data = request.get_json(silent=True) or {}
+        token = (data.get("token", "") or "").strip()
+        payload = parse_unsubscribe_token(token)
+        if not payload:
+            return jsonify({"error": "Lien de desabonnement invalide ou expire."}), 400
+
+        conn = get_conn()
+        try:
+            removed = dbmod.remove_watchlist_item(
+                conn,
+                int(payload["user_id"]),
+                str(payload["establishment"]),
+            )
+        finally:
+            conn.close()
+
+        if not removed:
+            return jsonify({"error": "Cet etablissement n'etait plus dans la liste de surveillance."}), 404
+        return jsonify({"ok": True, "establishment": payload["establishment"]})
 
     @app.get("/search")
     def search_page():
@@ -314,6 +629,47 @@ def create_app() -> Flask:
         finally:
             conn.close()
         return jsonify(items)
+
+    @app.post("/utilisateurs")
+    def create_user_profile():
+        """
+        REST: POST /utilisateurs
+        Creates a user profile from a JSON document validated with json-schema.
+        """
+        data = request.get_json(silent=True)
+        if data is None:
+            return jsonify({"error": "Le corps de la requete doit etre un document JSON valide."}), 400
+
+        try:
+            validate(instance=data, schema=USER_PROFILE_SCHEMA)
+        except ValidationError as exc:
+            path = ".".join(str(part) for part in exc.absolute_path)
+            return (
+                jsonify(
+                    {
+                        "error": "Document JSON invalide.",
+                        "details": exc.message,
+                        "path": path,
+                    }
+                ),
+                400,
+            )
+
+        conn = get_conn()
+        try:
+            profile = dbmod.create_user_profile(
+                conn,
+                full_name=data["nom_complet"],
+                email=data["courriel"],
+                password=data["mot_de_passe"],
+                watchlist=data["etablissements_surveille"],
+            )
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 409
+        finally:
+            conn.close()
+
+        return jsonify(profile), 201
 
     return app
 

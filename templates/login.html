@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Connexion</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/styles.css') }}">
+  <style>html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}</style>
+</head>
+<body class="w3-light-grey">
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
+      <a href="/inscription" class="w3-bar-item w3-button w3-hover-white">Inscription</a>
+    </div>
+  </div>
+
+  <div class="w3-content" style="max-width:700px; margin-top:72px;">
+    <div class="w3-card w3-white w3-padding-large">
+      <h1 class="w3-text-teal">Connexion</h1>
+      {% if error %}
+      <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
+        <p>{{ error }}</p>
+      </div>
+      {% endif %}
+      <form class="w3-container" method="post" action="/connexion">
+        <label for="courriel"><b>Courriel</b></label>
+        <input id="courriel" name="courriel" class="w3-input w3-border w3-margin-bottom" type="email" required>
+
+        <label for="mot_de_passe"><b>Mot de passe</b></label>
+        <input id="mot_de_passe" name="mot_de_passe" class="w3-input w3-border w3-margin-bottom" type="password" required>
+
+        <button class="w3-button w3-teal" type="submit">Se connecter</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

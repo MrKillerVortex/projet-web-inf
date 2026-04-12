@@ -31,3 +31,26 @@ CREATE INDEX IF NOT EXISTS idx_violations_city ON violations(city);
 CREATE INDEX IF NOT EXISTS idx_violations_establishment ON violations(establishment);
 CREATE INDEX IF NOT EXISTS idx_violations_owner ON violations(owner);
 CREATE INDEX IF NOT EXISTS idx_violations_street ON violations(street);
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  profile_photo BLOB,
+  profile_photo_mime TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_watchlist (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  establishment TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, establishment),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_user_watchlist_user_id ON user_watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_watchlist_establishment ON user_watchlist(establishment);

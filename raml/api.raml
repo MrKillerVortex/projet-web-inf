@@ -19,6 +19,21 @@ types:
       status: string
       city: string
       raw: object
+  UtilisateurCreate:
+    type: object
+    properties:
+      nom_complet: string
+      courriel: string
+      etablissements_surveille: string[]
+      mot_de_passe: string
+  Utilisateur:
+    type: object
+    properties:
+      id: integer
+      full_name: string
+      email: string
+      watchlist: string[]
+      created_at: string
 
 /contrevenants:
   get:
@@ -86,3 +101,30 @@ types:
         body:
           application/json:
             example: { "error": "Parametre requis: etablissement" }
+
+/utilisateurs:
+  post:
+    description: Cree un profil d'utilisateur a partir d'un document JSON valide par json-schema.
+    body:
+      application/json:
+        type: UtilisateurCreate
+        example:
+          {
+            "nom_complet": "Jean Tremblay",
+            "courriel": "jean.tremblay@example.com",
+            "etablissements_surveille": ["Restaurant Test", "Boulangerie Demo"],
+            "mot_de_passe": "motdepasse123"
+          }
+    responses:
+      201:
+        body:
+          application/json:
+            type: Utilisateur
+      400:
+        body:
+          application/json:
+            example: { "error": "Document JSON invalide.", "details": "'mot_de_passe' is a required property", "path": "" }
+      409:
+        body:
+          application/json:
+            example: { "error": "Un profil avec cette adresse courriel existe deja." }

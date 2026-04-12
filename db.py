@@ -1,6 +1,7 @@
 import csv
 import datetime as dt
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -8,6 +9,7 @@ import sqlite3
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 CSV_URL = (
@@ -103,6 +105,81 @@ def _get_first(record: dict, keys: list[str]) -> str:
     return ""
 
 
+def _parse_csv_records(csv_path: Path) -> list[dict]:
+    with open(csv_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        try:
+            headers = next(reader)
+        except StopIteration:
+            return []
+
+        keys = [_header_key(h) for h in headers]
+        return [
+            {keys[i]: (cells[i] if i < len(cells) else "") for i in range(len(keys))}
+            for cells in reader
+        ]
+
+
+def _record_to_violation(record: dict) -> dict:
+    establishment = _get_first(
+        record,
+        [
+            "etablissement",
+            "nom_etablissement",
+            "nom_de_etablissement",
+            "nom_de_letablissement",
+            "etablissement_nom",
+            "establishment",
+            "name",
+        ],
+    )
+    category = _get_first(record, ["categorie", "category", "categorie_etablissement"])
+    status = _get_first(record, ["statut", "status", "statut_dossier"])
+    city = _get_first(record, ["ville", "city", "municipalite"])
+    description = _get_first(record, ["description", "infraction", "details"])
+    amount = _parse_money(_get_first(record, ["montant", "montant_total", "amount", "amende", "fine"]))
+    date_iso = _parse_date_loose(
+        _get_first(record, ["date_jugement", "date_du_jugement", "date", "judgement_date"])
+    )
+    owner = _get_first(record, ["proprietaire", "nom_proprietaire", "proprietaire_nom", "owner"])
+    street = _get_first(
+        record, ["rue", "nom_rue", "adresse", "adresse_etablissement", "adresse_complete", "street"]
+    )
+
+    searchable = _normalize(
+        " ".join(
+            [
+                establishment,
+                owner,
+                street,
+                category,
+                status,
+                city,
+                description,
+                _get_first(record, ["proprietaire", "owner"]),
+            ]
+        )
+    )
+
+    payload = json.dumps(record, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    source_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    return {
+        "source_hash": source_hash,
+        "date_iso": date_iso,
+        "establishment": establishment.strip(),
+        "owner": owner.strip(),
+        "street": street.strip(),
+        "category": category.strip(),
+        "description": description.strip(),
+        "amount": amount,
+        "status": status.strip(),
+        "city": city.strip(),
+        "searchable": searchable,
+        "raw_json": payload,
+    }
+
+
 @dataclass(frozen=True)
 class SearchParams:
     q: str = ""
@@ -162,6 +239,41 @@ def init_schema(conn: sqlite3.Connection) -> None:
         except sqlite3.OperationalError:
             pass
 
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY,
+          full_name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          password_hash TEXT NOT NULL,
+          profile_photo BLOB,
+          profile_photo_mime TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_watchlist (
+          id INTEGER PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          establishment TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, establishment),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        """
+    )
+    for stmt in (
+        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
+        "CREATE INDEX IF NOT EXISTS idx_user_watchlist_user_id ON user_watchlist(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_user_watchlist_establishment ON user_watchlist(establishment)",
+    ):
+        try:
+            conn.execute(stmt)
+        except sqlite3.OperationalError:
+            pass
+
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
     """
@@ -195,6 +307,17 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         # Must be NOT NULL because code assumes presence; default keeps migration safe.
         add_col("ALTER TABLE violations ADD COLUMN searchable TEXT NOT NULL DEFAULT ''")
 
+    user_cols = {
+        r["name"]
+        for r in conn.execute("PRAGMA table_info(users)").fetchall()
+        if r["name"] is not None
+    }
+    if user_cols:
+        if "profile_photo" not in user_cols:
+            add_col("ALTER TABLE users ADD COLUMN profile_photo BLOB")
+        if "profile_photo_mime" not in user_cols:
+            add_col("ALTER TABLE users ADD COLUMN profile_photo_mime TEXT")
+
     # Indexes for added columns (safe to run repeatedly).
     try:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_violations_establishment ON violations(establishment)")
@@ -227,6 +350,270 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def hash_password(password: str) -> str:
+    return generate_password_hash(password)
+
+
+def verify_password(password_hash: str, password: str) -> bool:
+    if password_hash.startswith("pbkdf2:") or password_hash.startswith("scrypt:"):
+        return check_password_hash(password_hash, password)
+    if "$" in password_hash:
+        try:
+            salt, digest = password_hash.split("$", 1)
+            expected = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
+            return hmac.compare_digest(expected, digest)
+        except ValueError:
+            return False
+    return False
+
+
+def create_user_profile(
+    conn: sqlite3.Connection,
+    *,
+    full_name: str,
+    email: str,
+    password: str,
+    watchlist: list[str],
+) -> dict:
+    ensure_schema(conn)
+
+    normalized_email = email.strip().lower()
+    password_hash = hash_password(password)
+
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        cur = conn.execute(
+            """
+            INSERT INTO users (full_name, email, password_hash)
+            VALUES (?, ?, ?)
+            """,
+            (full_name.strip(), normalized_email, password_hash),
+        )
+        user_id = int(cur.lastrowid)
+
+        cleaned_watchlist = []
+        seen = set()
+        for name in watchlist:
+            item = str(name).strip()
+            if not item:
+                continue
+            key = item.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned_watchlist.append(item)
+
+        for establishment in cleaned_watchlist:
+            conn.execute(
+                """
+                INSERT INTO user_watchlist (user_id, establishment)
+                VALUES (?, ?)
+                """,
+                (user_id, establishment),
+            )
+        conn.commit()
+    except sqlite3.IntegrityError as exc:
+        conn.rollback()
+        if "users.email" in str(exc).lower() or "unique" in str(exc).lower():
+            raise ValueError("Un profil avec cette adresse courriel existe deja.") from exc
+        raise
+
+    row = conn.execute(
+        """
+        SELECT id, full_name, email, created_at
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+
+    watched = [
+        r["establishment"]
+        for r in conn.execute(
+            """
+            SELECT establishment
+            FROM user_watchlist
+            WHERE user_id = ?
+            ORDER BY establishment COLLATE NOCASE
+            """,
+            (user_id,),
+        ).fetchall()
+    ]
+
+    return {
+        "id": int(row["id"]),
+        "full_name": row["full_name"],
+        "email": row["email"],
+        "watchlist": watched,
+        "created_at": row["created_at"],
+    }
+
+
+def get_user_by_email(conn: sqlite3.Connection, email: str) -> dict | None:
+    ensure_schema(conn)
+    row = conn.execute(
+        """
+        SELECT id, full_name, email, password_hash, profile_photo_mime, created_at
+        FROM users
+        WHERE email = ?
+        """,
+        (email.strip().lower(),),
+    ).fetchone()
+    if not row:
+        return None
+    return dict(row)
+
+
+def get_user_by_id(conn: sqlite3.Connection, user_id: int) -> dict | None:
+    ensure_schema(conn)
+    row = conn.execute(
+        """
+        SELECT id, full_name, email, profile_photo_mime, created_at
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return None
+
+    watchlist = [
+        r["establishment"]
+        for r in conn.execute(
+            """
+            SELECT establishment
+            FROM user_watchlist
+            WHERE user_id = ?
+            ORDER BY establishment COLLATE NOCASE
+            """,
+            (user_id,),
+        ).fetchall()
+    ]
+    out = dict(row)
+    out["watchlist"] = watchlist
+    return out
+
+
+def authenticate_user(conn: sqlite3.Connection, email: str, password: str) -> dict | None:
+    user = get_user_by_email(conn, email)
+    if not user:
+        return None
+    if not verify_password(user["password_hash"], password):
+        return None
+    return get_user_by_id(conn, int(user["id"]))
+
+
+def replace_user_watchlist(conn: sqlite3.Connection, user_id: int, watchlist: list[str]) -> list[str]:
+    ensure_schema(conn)
+    cleaned = []
+    seen = set()
+    for name in watchlist:
+        item = str(name).strip()
+        if not item:
+            continue
+        key = item.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(item)
+
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        conn.execute("DELETE FROM user_watchlist WHERE user_id = ?", (user_id,))
+        for establishment in cleaned:
+            conn.execute(
+                "INSERT INTO user_watchlist (user_id, establishment) VALUES (?, ?)",
+                (user_id, establishment),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return cleaned
+
+
+def remove_watchlist_item(conn: sqlite3.Connection, user_id: int, establishment: str) -> bool:
+    ensure_schema(conn)
+    cur = conn.execute(
+        """
+        DELETE FROM user_watchlist
+        WHERE user_id = ? AND establishment = ? COLLATE NOCASE
+        """,
+        (user_id, establishment.strip()),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def save_user_photo(conn: sqlite3.Connection, user_id: int, photo_bytes: bytes, mime_type: str) -> None:
+    ensure_schema(conn)
+    conn.execute(
+        """
+        UPDATE users
+        SET profile_photo = ?, profile_photo_mime = ?
+        WHERE id = ?
+        """,
+        (photo_bytes, mime_type, user_id),
+    )
+    conn.commit()
+
+
+def get_user_photo(conn: sqlite3.Connection, user_id: int) -> tuple[bytes, str] | None:
+    ensure_schema(conn)
+    row = conn.execute(
+        """
+        SELECT profile_photo, profile_photo_mime
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+    if not row or row["profile_photo"] is None or not row["profile_photo_mime"]:
+        return None
+    return bytes(row["profile_photo"]), str(row["profile_photo_mime"])
+
+
+def get_watchers_for_establishments(conn: sqlite3.Connection, establishments: list[str]) -> dict[str, list[dict]]:
+    ensure_schema(conn)
+    cleaned = []
+    seen = set()
+    for item in establishments:
+        name = str(item).strip()
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(name)
+
+    if not cleaned:
+        return {}
+
+    placeholders = ",".join("?" for _ in cleaned)
+    rows = conn.execute(
+        f"""
+        SELECT uw.establishment, u.id AS user_id, u.full_name, u.email
+        FROM user_watchlist AS uw
+        JOIN users AS u ON u.id = uw.user_id
+        WHERE uw.establishment IN ({placeholders})
+        ORDER BY uw.establishment COLLATE NOCASE, u.email COLLATE NOCASE
+        """,
+        cleaned,
+    ).fetchall()
+
+    out: dict[str, list[dict]] = {}
+    for row in rows:
+        out.setdefault(row["establishment"], []).append(
+            {
+                "user_id": int(row["user_id"]),
+                "full_name": row["full_name"],
+                "email": row["email"],
+            }
+        )
+    return out
+
+
 def table_has_data(conn: sqlite3.Connection) -> bool:
     row = conn.execute("SELECT COUNT(1) AS n FROM violations").fetchone()
     return int(row["n"]) > 0
@@ -246,87 +633,33 @@ def import_csv(conn: sqlite3.Connection, csv_path: Path, *, commit: bool = True)
     Import the CSV into SQLite. Returns inserted row count.
     """
     ensure_schema(conn)
+    inserted = 0
+    cur = conn.cursor()
 
-    with open(csv_path, "r", encoding="utf-8", newline="") as f:
-        reader = csv.reader(f)
-        try:
-            headers = next(reader)
-        except StopIteration:
-            return 0
-
-        keys = [_header_key(h) for h in headers]
-        inserted = 0
-        cur = conn.cursor()
-
-        for cells in reader:
-            record = {keys[i]: (cells[i] if i < len(cells) else "") for i in range(len(keys))}
-
-            establishment = _get_first(
-                record,
-                [
-                    "etablissement",
-                    "nom_etablissement",
-                    "nom_de_etablissement",
-                    "nom_de_letablissement",
-                    "etablissement_nom",
-                    "establishment",
-                    "name",
-                ],
-            )
-            category = _get_first(record, ["categorie", "category", "categorie_etablissement"])
-            status = _get_first(record, ["statut", "status", "statut_dossier"])
-            city = _get_first(record, ["ville", "city", "municipalite"])
-            description = _get_first(record, ["description", "infraction", "details"])
-            amount = _parse_money(_get_first(record, ["montant", "montant_total", "amount", "amende", "fine"]))
-            date_iso = _parse_date_loose(
-                _get_first(record, ["date_jugement", "date_du_jugement", "date", "judgement_date"])
-            )
-            owner = _get_first(record, ["proprietaire", "nom_proprietaire", "proprietaire_nom", "owner"])
-            street = _get_first(
-                record, ["rue", "nom_rue", "adresse", "adresse_etablissement", "adresse_complete", "street"]
-            )
-
-            searchable = _normalize(
-                " ".join(
-                    [
-                        establishment,
-                        owner,
-                        street,
-                        category,
-                        status,
-                        city,
-                        description,
-                        _get_first(record, ["proprietaire", "owner"]),
-                    ]
-                )
-            )
-
-            payload = json.dumps(record, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-            source_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-            cur.execute(
-                """
-                INSERT INTO violations (
-                  source_hash, date_iso, establishment, owner, street, category, description, amount, status, city, searchable, raw_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(source_hash) DO NOTHING
-                """,
-                (
-                    source_hash,
-                    date_iso,
-                    establishment.strip(),
-                    owner.strip(),
-                    street.strip(),
-                    category.strip(),
-                    description.strip(),
-                    amount,
-                    status.strip(),
-                    city.strip(),
-                    searchable,
-                    payload,
-                ),
-            )
-            inserted += cur.execute("SELECT changes()").fetchone()[0]
+    for parsed in (_record_to_violation(record) for record in _parse_csv_records(csv_path)):
+        cur.execute(
+            """
+            INSERT INTO violations (
+              source_hash, date_iso, establishment, owner, street, category, description, amount, status, city, searchable, raw_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(source_hash) DO NOTHING
+            """,
+            (
+                parsed["source_hash"],
+                parsed["date_iso"],
+                parsed["establishment"],
+                parsed["owner"],
+                parsed["street"],
+                parsed["category"],
+                parsed["description"],
+                parsed["amount"],
+                parsed["status"],
+                parsed["city"],
+                parsed["searchable"],
+                parsed["raw_json"],
+            ),
+        )
+        inserted += cur.execute("SELECT changes()").fetchone()[0]
 
     if commit:
         conn.commit()
@@ -353,6 +686,23 @@ def refresh_from_csv(conn: sqlite3.Connection, csv_path: Path) -> int:
     except Exception:
         conn.rollback()
         raise
+
+
+def detect_new_violations(conn: sqlite3.Connection, csv_path: Path) -> list[dict]:
+    ensure_schema(conn)
+    existing_hashes = {
+        row["source_hash"]
+        for row in conn.execute(
+            "SELECT source_hash FROM violations WHERE source_hash IS NOT NULL AND TRIM(source_hash) <> ''"
+        ).fetchall()
+    }
+
+    new_items = []
+    for parsed in (_record_to_violation(record) for record in _parse_csv_records(csv_path)):
+        if parsed["source_hash"] in existing_hashes:
+            continue
+        new_items.append(parsed)
+    return new_items
 
 
 def build_where(params: SearchParams) -> tuple[str, list]:

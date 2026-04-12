@@ -54,6 +54,23 @@ L'app demarre un `BackgroundScheduler` qui synchronise les donnees **chaque jour
 - Changer la timezone: `$env:INF5190_TZ = "America/Toronto"`
 - Installer la dependance: `python -m pip install -r requirements.txt`
 
+Pour l'envoi des courriels E3, configurer aussi:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_FROM`
+- `SMTP_USE_TLS=1`
+- `PUBLIC_BASE_URL`
+
+Sans configuration SMTP, l'application detecte les nouveaux contrevenants mais n'envoie pas de courriel.
+`PUBLIC_BASE_URL` sert a generer les liens absolus de desabonnement envoyes par courriel, par exemple:
+
+```text
+PUBLIC_BASE_URL=https://ton-projet.up.railway.app
+```
+
 ## Deploiement cloud
 
 Le projet est prepare pour un deploiement simple sur `Railway`:

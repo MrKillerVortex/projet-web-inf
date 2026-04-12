@@ -33,6 +33,12 @@
       <a href="#recherche" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Recherche</a>
       <a href="#dates" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Dates</a>
       <a href="#restaurant" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Restaurant</a>
+      <a href="/inscription" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Inscription</a>
+      {% if user %}
+      <a href="/profil" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Profil</a>
+      {% else %}
+      <a href="/connexion" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Connexion</a>
+      {% endif %}
       <a href="/doc" class="w3-bar-item w3-button w3-hide-small w3-hover-white">Doc</a>
     </div>
   </div>
@@ -48,6 +54,12 @@
     <a class="w3-bar-item w3-button w3-hover-black" href="#recherche" onclick="w3_close()">Recherche</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="#dates" onclick="w3_close()">Recherche (dates)</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="#restaurant" onclick="w3_close()">Recherche (restaurant)</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="/inscription" onclick="w3_close()">Inscription</a>
+    {% if user %}
+    <a class="w3-bar-item w3-button w3-hover-black" href="/profil" onclick="w3_close()">Profil</a>
+    {% else %}
+    <a class="w3-bar-item w3-button w3-hover-black" href="/connexion" onclick="w3_close()">Connexion</a>
+    {% endif %}
     <a class="w3-bar-item w3-button w3-hover-black" href="#donnees" onclick="w3_close()">Donnees</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="/doc" onclick="w3_close()">Doc RAML</a>
   </nav>
@@ -64,10 +76,13 @@
         <h1 class="w3-text-teal hero-title">Constats d'infraction lors d'inspections alimentaires</h1>
         <p class="hero-subtitle">Ville de Montreal. Donnees ouvertes. Flask + SQLite. Recherche et services REST.</p>
         <div class="w3-row-padding w3-margin-top">
-          <div class="w3-half">
+          <div class="w3-third">
             <a class="w3-button w3-teal w3-block w3-padding-large" href="#recherche"><i class="fa fa-search w3-margin-right"></i>Aller a la recherche</a>
           </div>
-          <div class="w3-half">
+          <div class="w3-third">
+            <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/inscription"><i class="fa fa-user-plus w3-margin-right"></i>Creer un profil</a>
+          </div>
+          <div class="w3-third">
             <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/doc"><i class="fa fa-file-text-o w3-margin-right"></i>Voir la doc RAML</a>
           </div>
         </div>

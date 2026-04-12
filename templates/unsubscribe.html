@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Desabonnement</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/styles.css') }}">
+  <style>html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}</style>
+</head>
+<body class="w3-light-grey">
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
+      <a href="/doc" class="w3-bar-item w3-button w3-hover-white">Doc</a>
+    </div>
+  </div>
+
+  <div class="w3-content" style="max-width:800px; margin-top:72px;">
+    <div class="w3-card w3-white w3-padding-large">
+      <h1 class="w3-text-teal">Confirmation de desabonnement</h1>
+
+      {% if valid %}
+      <p>Adresse courriel: <b>{{ email }}</b></p>
+      <p>Etablissement: <b>{{ establishment }}</b></p>
+      <p>Confirmer la suppression de cet etablissement de la liste de surveillance.</p>
+      <button id="confirmUnsubscribe" class="w3-button w3-red">Confirmer le desabonnement</button>
+      <div id="unsubscribeMessage" class="w3-panel w3-hide w3-margin-top"></div>
+      {% else %}
+      <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
+        <p>Lien de desabonnement invalide ou expire.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if valid %}
+  <script>
+    (function () {
+      var btn = document.getElementById('confirmUnsubscribe');
+      var box = document.getElementById('unsubscribeMessage');
+      if (!btn || !box) return;
+
+      function show(kind, text) {
+        box.className = 'w3-panel w3-margin-top';
+        if (kind === 'ok') {
+          box.className += ' w3-pale-green w3-leftbar w3-border-green';
+        } else {
+          box.className += ' w3-pale-red w3-leftbar w3-border-red';
+        }
+        box.textContent = text;
+      }
+
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        fetch('/api/desabonnement', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: {{ token|tojson }} })
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              if (!res.ok) throw data;
+              return data;
+            });
+          })
+          .then(function (data) {
+            show('ok', "Desabonnement confirme pour '" + data.establishment + "'.");
+          })
+          .catch(function (err) {
+            show('err', (err && err.error) ? err.error : 'Erreur inconnue.');
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+    })();
+  </script>
+  {% endif %}
+</body>
+</html>

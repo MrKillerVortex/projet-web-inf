@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>INF5190 - Inscription</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-black.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/styles.css') }}">
+  <style>
+    html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif;}
+  </style>
+</head>
+<body class="w3-light-grey">
+  <div class="w3-top">
+    <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
+      <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
+      <a href="/connexion" class="w3-bar-item w3-button w3-hover-white">Connexion</a>
+      {% if user %}
+      <a href="/profil" class="w3-bar-item w3-button w3-hover-white">Profil</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="w3-content" style="max-width:900px; margin-top:72px;">
+    <div class="w3-card w3-white w3-padding-large">
+      <h1 class="w3-text-teal">Creer un profil</h1>
+      <p class="w3-small w3-opacity">Cette page invoque le service REST `POST /utilisateurs`.</p>
+
+      <form id="signupForm" class="w3-container">
+        <label for="nom_complet"><b>Nom complet</b></label>
+        <input id="nom_complet" class="w3-input w3-border w3-margin-bottom" type="text" required>
+
+        <label for="courriel"><b>Adresse courriel</b></label>
+        <input id="courriel" class="w3-input w3-border w3-margin-bottom" type="email" required>
+
+        <label for="etablissements_surveille"><b>Etablissements a surveiller</b></label>
+        <textarea id="etablissements_surveille" class="w3-input w3-border w3-margin-bottom" rows="6" placeholder="Un etablissement par ligne"></textarea>
+
+        <label for="mot_de_passe"><b>Mot de passe</b></label>
+        <input id="mot_de_passe" class="w3-input w3-border w3-margin-bottom" type="password" minlength="8" required>
+
+        <button class="w3-button w3-teal" type="submit">Creer le profil</button>
+      </form>
+
+      <div id="signupMessage" class="w3-panel w3-hide w3-margin-top"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById('signupForm');
+      var msg = document.getElementById('signupMessage');
+      if (!form || !msg) return;
+
+      function show(kind, text) {
+        msg.className = 'w3-panel w3-margin-top';
+        if (kind === 'ok') {
+          msg.className += ' w3-pale-green w3-leftbar w3-border-green';
+        } else {
+          msg.className += ' w3-pale-red w3-leftbar w3-border-red';
+        }
+        msg.textContent = text;
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var payload = {
+          nom_complet: document.getElementById('nom_complet').value.trim(),
+          courriel: document.getElementById('courriel').value.trim(),
+          etablissements_surveille: document.getElementById('etablissements_surveille').value
+            .split(/\r?\n/)
+            .map(function (s) { return s.trim(); })
+            .filter(Boolean),
+          mot_de_passe: document.getElementById('mot_de_passe').value
+        };
+
+        fetch('/utilisateurs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              if (!res.ok) throw data;
+              return data;
+            });
+          })
+          .then(function () {
+            form.reset();
+            show('ok', 'Profil cree. Tu peux maintenant te connecter.');
+          })
+          .catch(function (err) {
+            show('err', (err && (err.details || err.error)) ? (err.details || err.error) : 'Erreur inconnue.');
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
