@@ -86,8 +86,4 @@ python import_violations.py --db /app/instance/violations.sqlite3
 
 7. Deployer. Railway fournira une URL publique du type:
 
-```text
-https://nom-du-projet.up.railway.app
-```
-
-Cette URL est celle a remettre pour la correction une fois le deploiement complete.
+https://shawn-projet.up.railway.app
