@@ -32,13 +32,6 @@ def create_app() -> Flask:
     def get_conn():
         return dbmod.connect(app.config["DATABASE"])
 
-<<<<<<< HEAD
-    def db_ready() -> tuple[bool, str]:
-        db_path = app.config["DATABASE"]
-        if not os.path.exists(db_path):
-            return False, f"Base introuvable: {db_path}"
-        try:
-=======
     def ensure_database_bootstrap() -> None:
         """
         Bootstrap the SQLite database on first startup.
@@ -79,7 +72,6 @@ def create_app() -> Flask:
         db_path = app.config["DATABASE"]
         try:
             ensure_database_bootstrap()
->>>>>>> a4809c0 (Ajout base donnée)
             conn = get_conn()
             try:
                 row = conn.execute(
@@ -89,11 +81,8 @@ def create_app() -> Flask:
                     return False, "Table 'violations' absente. Cree la DB avec db/db.sql puis importe le CSV."
                 # Best-effort migration for older DBs.
                 dbmod.ensure_schema(conn)
-<<<<<<< HEAD
-=======
                 if not dbmod.table_has_data(conn):
                     return False, "Base initialisee mais aucune donnee n'a pu etre importee."
->>>>>>> a4809c0 (Ajout base donnée)
                 return True, ""
             finally:
                 conn.close()
@@ -113,14 +102,7 @@ def create_app() -> Flask:
         """
         Daily sync job: download the CSV and refresh the SQLite table.
         """
-<<<<<<< HEAD
-        db_path = app.config["DATABASE"]
-        if not os.path.exists(db_path):
-            # Database must be created ahead of time per assignment.
-            return
-=======
         ensure_database_bootstrap()
->>>>>>> a4809c0 (Ajout base donnée)
 
         cache_path = Path(app.config["CSV_CACHE"])
         dbmod.download_csv(cache_path)
