@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+
+# Flask instance (SQLite DB)
+instance/
+
+# Cached dataset (optional)
+data/violations.csv
+
+# DB artifacts required by assignment are committed:
+# - db/violations_empty.sqlite3

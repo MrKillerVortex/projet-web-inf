@@ -32,11 +32,54 @@ def create_app() -> Flask:
     def get_conn():
         return dbmod.connect(app.config["DATABASE"])
 
+<<<<<<< HEAD
     def db_ready() -> tuple[bool, str]:
         db_path = app.config["DATABASE"]
         if not os.path.exists(db_path):
             return False, f"Base introuvable: {db_path}"
         try:
+=======
+    def ensure_database_bootstrap() -> None:
+        """
+        Bootstrap the SQLite database on first startup.
+
+        Railway does not expose an easy shell in every plan/UI path, so the app can
+        self-initialize if the DB file or the table data is missing.
+        """
+        db_path = Path(app.config["DATABASE"])
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        conn = get_conn()
+        try:
+            if not db_path.exists() or db_path.stat().st_size == 0:
+                schema_path = Path(app.root_path) / "db" / "db.sql"
+                if schema_path.exists():
+                    conn.executescript(schema_path.read_text(encoding="utf-8"))
+                    conn.commit()
+
+            dbmod.ensure_schema(conn)
+
+            row = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='violations'"
+            ).fetchone()
+            if not row:
+                schema_path = Path(app.root_path) / "db" / "db.sql"
+                conn.executescript(schema_path.read_text(encoding="utf-8"))
+                conn.commit()
+
+            if not dbmod.table_has_data(conn):
+                cache_path = Path(app.config["CSV_CACHE"])
+                if not cache_path.exists():
+                    dbmod.download_csv(cache_path)
+                dbmod.import_csv(conn, cache_path)
+        finally:
+            conn.close()
+
+    def db_ready() -> tuple[bool, str]:
+        db_path = app.config["DATABASE"]
+        try:
+            ensure_database_bootstrap()
+>>>>>>> a4809c0 (Ajout base donnée)
             conn = get_conn()
             try:
                 row = conn.execute(
@@ -46,6 +89,11 @@ def create_app() -> Flask:
                     return False, "Table 'violations' absente. Cree la DB avec db/db.sql puis importe le CSV."
                 # Best-effort migration for older DBs.
                 dbmod.ensure_schema(conn)
+<<<<<<< HEAD
+=======
+                if not dbmod.table_has_data(conn):
+                    return False, "Base initialisee mais aucune donnee n'a pu etre importee."
+>>>>>>> a4809c0 (Ajout base donnée)
                 return True, ""
             finally:
                 conn.close()
@@ -65,10 +113,14 @@ def create_app() -> Flask:
         """
         Daily sync job: download the CSV and refresh the SQLite table.
         """
+<<<<<<< HEAD
         db_path = app.config["DATABASE"]
         if not os.path.exists(db_path):
             # Database must be created ahead of time per assignment.
             return
+=======
+        ensure_database_bootstrap()
+>>>>>>> a4809c0 (Ajout base donnée)
 
         cache_path = Path(app.config["CSV_CACHE"])
         dbmod.download_csv(cache_path)
