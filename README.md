@@ -1,5 +1,22 @@
 # INF5190 - Projet de session (Montreal - inspections alimentaires)
 
+## Technologies et templates
+
+Le projet utilise les bibliotheques Python suivantes:
+
+- `Flask`
+- `APScheduler`
+- `jsonschema`
+- `gunicorn`
+
+Le frontend utilise:
+
+- HTML/CSS
+- JavaScript natif
+- le template CSS `W3.CSS`
+
+L'interface a ete adaptee a partir d'un template `W3.CSS`. Son utilisation est permise dans le cadre du projet, sous reserve du respect de la licence/conditions d'utilisation associees.
+
 ## Base de donnees (remise)
 
 - Script SQL: `db/db.sql`
