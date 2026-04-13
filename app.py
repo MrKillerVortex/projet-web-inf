@@ -373,6 +373,52 @@ def create_app() -> Flask:
         flash("Photo de profil enregistree.", "success")
         return redirect(url_for("profile_page"))
 
+    @app.post("/profil/test-email")
+    def profile_test_email_submit():
+        user = current_user()
+        if not user:
+            return redirect(url_for("login_page"))
+
+        watchlist = user.get("watchlist") or []
+        if not watchlist:
+            flash("Ajoute d'abord au moins un etablissement a surveiller.", "error")
+            return redirect(url_for("profile_page"))
+
+        establishment = str(watchlist[0]).strip()
+        token = build_unsubscribe_token(int(user["id"]), establishment)
+        unsubscribe_url = ""
+        if app.config.get("PUBLIC_BASE_URL"):
+            unsubscribe_url = app.config["PUBLIC_BASE_URL"].rstrip("/") + url_for(
+                "unsubscribe_page", token=token
+            )
+
+        subject = f"Test INF5190 - notification pour {establishment}"
+        body = (
+            f"Bonjour {user['full_name']},\n\n"
+            f"Ceci est un courriel de test pour l'etablissement surveille '{establishment}'.\n\n"
+            "Exemple de nouvelle contravention detectee:\n"
+            "- Date: 2026-04-13 | Statut: Ouvert | Montant: 500.0\n"
+            + (
+                f"\nLien de desabonnement:\n{unsubscribe_url}\n"
+                if unsubscribe_url
+                else "\nLien de desabonnement indisponible (PUBLIC_BASE_URL non configure).\n"
+            )
+            + "\nCeci est un message de test du systeme INF5190."
+        )
+
+        try:
+            sent = send_notification_email(str(user["email"]), subject, body)
+        except Exception as exc:
+            flash(f"Echec d'envoi du courriel de test: {exc}", "error")
+            return redirect(url_for("profile_page"))
+
+        if not sent:
+            flash("SMTP non configure. Verifie les variables SMTP_* et PUBLIC_BASE_URL.", "error")
+            return redirect(url_for("profile_page"))
+
+        flash(f"Courriel de test envoye a {user['email']}. Verifie Mailtrap.", "success")
+        return redirect(url_for("profile_page"))
+
     @app.get("/profil/photo/<int:user_id>")
     def profile_photo_view(user_id: int):
         conn = get_conn()
