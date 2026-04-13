@@ -26,8 +26,8 @@
       <p>Adresse courriel: <b>{{ email }}</b></p>
       <p>Etablissement: <b>{{ establishment }}</b></p>
       <p>Confirmer la suppression de cet etablissement de la liste de surveillance.</p>
-      <button id="confirmUnsubscribe" class="w3-button w3-red">Confirmer le desabonnement</button>
-      <div id="unsubscribeMessage" class="w3-panel w3-hide w3-margin-top"></div>
+      <button id="confirm-unsubscribe" class="w3-button w3-red">Confirmer le desabonnement</button>
+      <div id="unsubscribe-message" class="w3-panel w3-hide w3-margin-top"></div>
       {% else %}
       <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
         <p>Lien de desabonnement invalide ou expire.</p>
@@ -39,8 +39,8 @@
   {% if valid %}
   <script>
     (function () {
-      var btn = document.getElementById('confirmUnsubscribe');
-      var box = document.getElementById('unsubscribeMessage');
+      var btn = document.getElementById('confirm-unsubscribe');
+      var box = document.getElementById('unsubscribe-message');
       if (!btn || !box) return;
 
       function show(kind, text) {

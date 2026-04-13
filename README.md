@@ -63,6 +63,38 @@ $env:INF5190_DB_PATH = ".\\db\\violations_test.sqlite3"
 python .\\app.py
 ```
 
+## Configuration
+
+Les elements de configuration sont centralises dans `config.py` via la classe `AppConfig`.
+
+Structure documentee:
+
+- `FLASK_SECRET_KEY`: cle de session Flask
+- `INF5190_DB_PATH`: chemin vers la base SQLite
+- `INF5190_CSV_CACHE`: chemin du cache local du CSV
+- `INF5190_SCHEDULER`: `1` ou `0` pour activer/desactiver la synchro quotidienne
+- `INF5190_TZ`: timezone du scheduler
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_FROM`
+- `SMTP_USE_TLS`
+- `UNSUBSCRIBE_SALT`: sel pour signer les liens de desabonnement
+- `PUBLIC_BASE_URL`: URL publique absolue de l'application
+- `HOST`: interface d'ecoute Flask/Gunicorn
+- `PORT`: port d'ecoute
+- `FLASK_DEBUG`: `1` ou `0`
+
+Exemple local PowerShell:
+
+```powershell
+$env:INF5190_DB_PATH = ".\\instance\\violations.sqlite3"
+$env:FLASK_SECRET_KEY = "change-me"
+$env:FLASK_DEBUG = "0"
+python .\\app.py
+```
+
 ## Synchronisation quotidienne (BackgroundScheduler)
 
 L'app demarre un `BackgroundScheduler` qui synchronise les donnees **chaque jour a minuit** (timezone par defaut: `America/Toronto`).

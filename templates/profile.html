@@ -29,16 +29,13 @@
       <h1 class="w3-text-teal">Profil</h1>
       <p class="w3-small w3-opacity">{{ user.full_name }} | {{ user.email }}</p>
 
-      {% if message %}
-      <div class="w3-panel w3-pale-green w3-leftbar w3-border-green">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div class="w3-panel {% if category == 'success' %}w3-pale-green w3-border-green{% else %}w3-pale-red w3-border-red{% endif %} w3-leftbar">
         <p>{{ message }}</p>
       </div>
-      {% endif %}
-      {% if error %}
-      <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
-        <p>{{ error }}</p>
-      </div>
-      {% endif %}
+      {% endfor %}
+      {% endwith %}
 
       <div class="w3-row-padding">
         <div class="w3-third">

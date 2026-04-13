@@ -28,7 +28,7 @@
       <h1 class="w3-text-teal">Creer un profil</h1>
       <p class="w3-small w3-opacity">Cette page invoque le service REST `POST /utilisateurs`.</p>
 
-      <form id="signupForm" class="w3-container">
+      <form id="signup-form" class="w3-container">
         <label for="nom_complet"><b>Nom complet</b></label>
         <input id="nom_complet" class="w3-input w3-border w3-margin-bottom" type="text" required>
 
@@ -44,14 +44,14 @@
         <button class="w3-button w3-teal" type="submit">Creer le profil</button>
       </form>
 
-      <div id="signupMessage" class="w3-panel w3-hide w3-margin-top"></div>
+      <div id="signup-message" class="w3-panel w3-hide w3-margin-top"></div>
     </div>
   </div>
 
   <script>
     (function () {
-      var form = document.getElementById('signupForm');
-      var msg = document.getElementById('signupMessage');
+      var form = document.getElementById('signup-form');
+      var msg = document.getElementById('signup-message');
       if (!form || !msg) return;
 
       function show(kind, text) {

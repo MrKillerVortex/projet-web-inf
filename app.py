@@ -7,10 +7,12 @@ import smtplib
 from pathlib import Path
 from email.message import EmailMessage
 
-from flask import Flask, jsonify, redirect, render_template, request, send_file, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from jsonschema import ValidationError, validate
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from werkzeug.exceptions import HTTPException
 
+from config import AppConfig
 import db as dbmod
 
 from zoneinfo import ZoneInfo
@@ -47,24 +49,15 @@ USER_PROFILE_SCHEMA = {
 
 def create_app() -> Flask:
     app = Flask(__name__, instance_relative_config=True)
-    app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+    app.config.from_object(AppConfig)
+    app.secret_key = app.config["SECRET_KEY"]
 
     # Use instance/ for sqlite (recommended by Flask).
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
-    app.config["DATABASE"] = os.environ.get(
-        "INF5190_DB_PATH", os.path.join(app.instance_path, "violations.sqlite3")
-    )
-    app.config["CSV_CACHE"] = os.path.join(app.root_path, "data", "violations.csv")
-    app.config["SCHEDULER_ENABLED"] = os.environ.get("INF5190_SCHEDULER", "1") != "0"
-    app.config["SCHEDULER_TZ"] = os.environ.get("INF5190_TZ", "America/Toronto")
-    app.config["SMTP_HOST"] = os.environ.get("SMTP_HOST", "")
-    app.config["SMTP_PORT"] = int(os.environ.get("SMTP_PORT", "587"))
-    app.config["SMTP_USERNAME"] = os.environ.get("SMTP_USERNAME", "")
-    app.config["SMTP_PASSWORD"] = os.environ.get("SMTP_PASSWORD", "")
-    app.config["SMTP_FROM"] = os.environ.get("SMTP_FROM", "")
-    app.config["SMTP_USE_TLS"] = os.environ.get("SMTP_USE_TLS", "1") != "0"
-    app.config["UNSUBSCRIBE_SALT"] = "unsubscribe-restaurant"
-    app.config["PUBLIC_BASE_URL"] = os.environ.get("PUBLIC_BASE_URL", "")
+    if not app.config["DATABASE"]:
+        app.config["DATABASE"] = os.path.join(app.instance_path, "violations.sqlite3")
+    if not app.config["CSV_CACHE"]:
+        app.config["CSV_CACHE"] = os.path.join(app.root_path, "data", "violations.csv")
 
     def get_conn():
         return dbmod.connect(app.config["DATABASE"])
@@ -316,17 +309,16 @@ def create_app() -> Flask:
         finally:
             conn.close()
         if not user:
-            return render_template(
-                "login.html",
-                error="Courriel ou mot de passe invalide.",
-                user=current_user(),
-            ), 401
+            flash("Courriel ou mot de passe invalide.", "error")
+            return redirect(url_for("login_page"))
         session["user_id"] = int(user["id"])
+        flash("Connexion reussie.", "success")
         return redirect(url_for("profile_page"))
 
     @app.post("/deconnexion")
     def logout_submit():
         session.clear()
+        flash("Deconnexion reussie.", "success")
         return redirect(url_for("index"))
 
     @app.get("/profil")
@@ -334,7 +326,7 @@ def create_app() -> Flask:
         user = current_user()
         if not user:
             return redirect(url_for("login_page"))
-        return render_template("profile.html", user=user, message="", error="")
+        return render_template("profile.html", user=user)
 
     @app.post("/profil/watchlist")
     def profile_watchlist_submit():
@@ -347,15 +339,10 @@ def create_app() -> Flask:
         conn = get_conn()
         try:
             updated = dbmod.replace_user_watchlist(conn, int(user["id"]), watchlist)
-            refreshed_user = dbmod.get_user_by_id(conn, int(user["id"]))
         finally:
             conn.close()
-        return render_template(
-            "profile.html",
-            user=refreshed_user,
-            message=f"{len(updated)} etablissement(s) surveille(s) enregistres.",
-            error="",
-        )
+        flash(f"{len(updated)} etablissement(s) surveille(s) enregistres.", "success")
+        return redirect(url_for("profile_page"))
 
     @app.post("/profil/photo")
     def profile_photo_submit():
@@ -365,33 +352,26 @@ def create_app() -> Flask:
 
         uploaded = request.files.get("photo")
         if uploaded is None or uploaded.filename == "":
-            return render_template("profile.html", user=user, message="", error="Aucun fichier fourni."), 400
+            flash("Aucun fichier fourni.", "error")
+            return redirect(url_for("profile_page"))
 
         mime_type = (uploaded.mimetype or "").lower()
         if mime_type not in {"image/jpeg", "image/png"}:
-            return render_template(
-                "profile.html",
-                user=user,
-                message="",
-                error="Formats acceptes: JPG et PNG.",
-            ), 400
+            flash("Formats acceptes: JPG et PNG.", "error")
+            return redirect(url_for("profile_page"))
 
         photo_bytes = uploaded.read()
         if not photo_bytes:
-            return render_template("profile.html", user=user, message="", error="Fichier vide."), 400
+            flash("Fichier vide.", "error")
+            return redirect(url_for("profile_page"))
 
         conn = get_conn()
         try:
             dbmod.save_user_photo(conn, int(user["id"]), photo_bytes, mime_type)
-            refreshed_user = dbmod.get_user_by_id(conn, int(user["id"]))
         finally:
             conn.close()
-        return render_template(
-            "profile.html",
-            user=refreshed_user,
-            message="Photo de profil enregistree.",
-            error="",
-        )
+        flash("Photo de profil enregistree.", "success")
+        return redirect(url_for("profile_page"))
 
     @app.get("/profil/photo/<int:user_id>")
     def profile_photo_view(user_id: int):
@@ -671,12 +651,39 @@ def create_app() -> Flask:
 
         return jsonify(profile), 201
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(exc: HTTPException):
+        if request.path.startswith("/api/") or request.path in {
+            "/contrevenants",
+            "/restaurants",
+            "/infractions",
+            "/utilisateurs",
+        }:
+            return jsonify({"error": exc.description}), exc.code
+        return render_template("error.html", title=f"Erreur {exc.code}", message=exc.description), exc.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_exception(exc: Exception):
+        print(f"Unhandled application error: {exc}")
+        if request.path.startswith("/api/") or request.path in {
+            "/contrevenants",
+            "/restaurants",
+            "/infractions",
+            "/utilisateurs",
+        }:
+            return jsonify({"error": "Erreur interne du serveur."}), 500
+        return render_template(
+            "error.html",
+            title="Erreur interne du serveur",
+            message="Une erreur systeme est survenue. Veuillez reessayer plus tard.",
+        ), 500
+
     return app
 
 
 if __name__ == "__main__":
     app = create_app()
-    host = os.environ.get("HOST", "127.0.0.1")
-    port = int(os.environ.get("PORT", "5000"))
-    debug = os.environ.get("FLASK_DEBUG", "1") == "1"
+    host = app.config["HOST"]
+    port = app.config["PORT"]
+    debug = app.config["DEBUG"]
     app.run(debug=debug, host=host, port=port)

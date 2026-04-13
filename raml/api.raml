@@ -5,6 +5,11 @@ baseUri: http://127.0.0.1:5000
 mediaType: application/json
 
 types:
+  CompteContrevenant:
+    type: object
+    properties:
+      establishment: string
+      count: integer
   Contrevenant:
     type: object
     properties:
@@ -19,6 +24,21 @@ types:
       status: string
       city: string
       raw: object
+  Facettes:
+    type: object
+    properties:
+      status: string[]
+      category: string[]
+      city: string[]
+  SearchResponse:
+    type: object
+    properties:
+      items: Contrevenant[]
+      total: integer
+      page: integer
+      page_size: integer
+      stats: object
+      top_categories: object[]
   UtilisateurCreate:
     type: object
     properties:
@@ -34,6 +54,66 @@ types:
       email: string
       watchlist: string[]
       created_at: string
+  DesabonnementRequest:
+    type: object
+    properties:
+      token: string
+  DesabonnementResponse:
+    type: object
+    properties:
+      ok: boolean
+      establishment: string
+
+/api/facets:
+  get:
+    description: Retourne les listes distinctes de statuts, categories et villes pour alimenter les filtres du frontend.
+    responses:
+      200:
+        body:
+          application/json:
+            type: Facettes
+
+/api/violations:
+  get:
+    description: Recherche paginee pour le frontend avec filtres, tri, statistiques et top categories.
+    queryParameters:
+      q:
+        type: string
+        required: false
+      status:
+        type: string
+        required: false
+      category:
+        type: string
+        required: false
+      city:
+        type: string
+        required: false
+      from:
+        type: string
+        required: false
+        example: "2024-01-01"
+      to:
+        type: string
+        required: false
+        example: "2024-12-31"
+      sort:
+        type: string
+        required: false
+        example: "date_desc"
+      page:
+        type: integer
+        required: false
+        example: 1
+      page_size:
+        type: integer
+        required: false
+        example: 25
+    responses:
+      200:
+        body:
+          application/json:
+            type: SearchResponse
 
 /contrevenants:
   get:
@@ -60,11 +140,31 @@ types:
       200:
         body:
           application/json:
-            type: Contrevenant[]
+            example:
+              [
+                {
+                  "id": 1,
+                  "date": "2024-02-15",
+                  "establishment": "Restaurant Test",
+                  "owner": "Jean Tremblay",
+                  "street": "Boulevard Rosemont",
+                  "category": "Hygiene",
+                  "description": "Infraction example",
+                  "amount": 500.0,
+                  "status": "Ouvert",
+                  "city": "Montreal",
+                  "raw": {}
+                }
+              ]
       400:
         body:
           application/json:
             example: { "error": "Parametres invalides. Utilise du=YYYY-MM-DD&au=YYYY-MM-DD (ISO 8601)." }
+    queryString:
+      examples:
+        mode-counts:
+          value: "du=2022-05-08&au=2024-05-15&mode=counts"
+          description: Retourne plutot une liste agregee par etablissement.
 
 /restaurants:
   get:
@@ -101,6 +201,30 @@ types:
         body:
           application/json:
             example: { "error": "Parametre requis: etablissement" }
+
+/api/desabonnement:
+  delete:
+    description: Supprime un etablissement de la liste de surveillance d'un utilisateur a partir d'un token signe.
+    body:
+      application/json:
+        type: DesabonnementRequest
+        example:
+          {
+            "token": "eyJ1c2VyX2lkIjoxLCJlc3RhYmxpc2htZW50IjoiUmVzdGF1cmFudCBUZXN0In0.signature"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            type: DesabonnementResponse
+      400:
+        body:
+          application/json:
+            example: { "error": "Le corps doit etre un document JSON valide." }
+      404:
+        body:
+          application/json:
+            example: { "error": "Cet etablissement n'etait plus dans la liste de surveillance." }
 
 /utilisateurs:
   post:

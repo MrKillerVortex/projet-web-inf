@@ -44,7 +44,7 @@
   </div>
 
   <!-- Sidebar -->
-  <nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="mySidebar">
+  <nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="my-sidebar">
     <a href="javascript:void(0)" onclick="w3_close()" class="w3-right w3-xlarge w3-padding-large w3-hover-black w3-hide-large" title="Fermer">
       <i class="fa fa-remove"></i>
     </a>
@@ -65,7 +65,7 @@
   </nav>
 
   <!-- Overlay effect when opening sidebar on small screens -->
-  <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="Fermer le menu" id="myOverlay"></div>
+  <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="Fermer le menu" id="my-overlay"></div>
 
   <!-- Main content -->
   <div class="w3-main" style="margin-left:250px">
@@ -162,7 +162,7 @@
           <p class="hint w3-small">Ajax vers <span class="mono">/contrevenants</span> (mode <span class="mono">counts</span>). Tableau: etablissement + nombre de contraventions.</p>
 
           <div class="w3-card w3-padding w3-margin-top">
-            <form id="quickDatesForm" class="w3-container">
+            <form id="quick-dates-form" class="w3-container">
               <div class="w3-row-padding">
                 <div class="w3-half">
                   <label for="du"><b>Du</b></label>
@@ -173,13 +173,13 @@
                   <input class="w3-input w3-border" id="au" name="au" type="date" {% if not db_ready %}disabled{% endif %}>
                 </div>
               </div>
-              <button id="quickSubmit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
+              <button id="quick-submit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
                 Chercher
               </button>
-              <span id="quickStatus" class="w3-small w3-margin-left hint"></span>
+              <span id="quick-status" class="w3-small w3-margin-left hint"></span>
             </form>
 
-            <div id="quickResultsWrap" class="w3-margin-top" style="display:none;">
+            <div id="quick-results-wrap" class="w3-margin-top" style="display:none;">
               <div class="table-wrap">
                 <table class="w3-table w3-striped w3-small">
                   <thead>
@@ -188,7 +188,7 @@
                       <th class="w3-right-align">Nombre</th>
                     </tr>
                   </thead>
-                  <tbody id="quickResultsBody"></tbody>
+                  <tbody id="quick-results-body"></tbody>
                 </table>
               </div>
             </div>
@@ -202,18 +202,18 @@
           <p class="hint w3-small">Liste deroulante (prechargee). Ajax vers <span class="mono">/infractions</span> pour afficher les infractions du restaurant.</p>
 
           <div class="w3-card w3-padding w3-margin-top">
-            <form id="restaurantForm" class="w3-container">
-              <label for="restaurantSelect"><b>Restaurant</b></label>
-              <select id="restaurantSelect" class="w3-select w3-border" {% if not db_ready %}disabled{% endif %}>
+            <form id="restaurant-form" class="w3-container">
+              <label for="restaurant-select"><b>Restaurant</b></label>
+              <select id="restaurant-select" class="w3-select w3-border" {% if not db_ready %}disabled{% endif %}>
                 <option value="">Chargement...</option>
               </select>
-              <button id="restaurantSubmit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
+              <button id="restaurant-submit" class="w3-button w3-teal w3-margin-top" type="submit" {% if not db_ready %}disabled{% endif %}>
                 Voir les infractions
               </button>
-              <span id="restaurantStatus" class="w3-small w3-margin-left hint"></span>
+              <span id="restaurant-status" class="w3-small w3-margin-left hint"></span>
             </form>
 
-            <div id="restaurantResultsWrap" class="w3-margin-top" style="display:none;">
+            <div id="restaurant-results-wrap" class="w3-margin-top" style="display:none;">
               <div class="table-wrap">
                 <table class="w3-table w3-striped w3-small">
                   <thead>
@@ -226,12 +226,12 @@
                       <th>Ville</th>
                     </tr>
                   </thead>
-                  <tbody id="restaurantResultsBody"></tbody>
+                  <tbody id="restaurant-results-body"></tbody>
                 </table>
               </div>
               <details class="w3-margin-top">
                 <summary class="w3-small">Afficher les donnees completes (JSON)</summary>
-                <pre id="restaurantRaw" class="w3-small"></pre>
+                <pre id="restaurant-raw" class="w3-small"></pre>
               </details>
             </div>
           </div>
@@ -253,7 +253,7 @@
       </section>
     </main>
 
-    <footer id="myFooter">
+    <footer id="my-footer">
       <div class="w3-container w3-theme-l2 w3-padding-32">
         <h4>INF5190 - Projet de session</h4>
       </div>
@@ -267,8 +267,8 @@
 
   <script>
     // Sidebar handlers (W3Schools pattern)
-    var mySidebar = document.getElementById("mySidebar");
-    var overlayBg = document.getElementById("myOverlay");
+    var mySidebar = document.getElementById("my-sidebar");
+    var overlayBg = document.getElementById("my-overlay");
 
     function w3_open() {
       if (mySidebar.style.display === 'block') {
@@ -288,15 +288,15 @@
 
   <script>
     (function () {
-      var form = document.getElementById('quickDatesForm');
+      var form = document.getElementById('quick-dates-form');
       if (!form) return;
 
       var duEl = document.getElementById('du');
       var auEl = document.getElementById('au');
-      var statusEl = document.getElementById('quickStatus');
-      var bodyEl = document.getElementById('quickResultsBody');
-      var wrapEl = document.getElementById('quickResultsWrap');
-      var btn = document.getElementById('quickSubmit');
+      var statusEl = document.getElementById('quick-status');
+      var bodyEl = document.getElementById('quick-results-body');
+      var wrapEl = document.getElementById('quick-results-wrap');
+      var btn = document.getElementById('quick-submit');
 
       function setStatus(text) {
         if (statusEl) statusEl.textContent = text || '';
@@ -363,15 +363,15 @@
 
   <script>
     (function () {
-      var selectEl = document.getElementById('restaurantSelect');
-      var form = document.getElementById('restaurantForm');
+      var selectEl = document.getElementById('restaurant-select');
+      var form = document.getElementById('restaurant-form');
       if (!selectEl || !form) return;
 
-      var statusEl = document.getElementById('restaurantStatus');
-      var bodyEl = document.getElementById('restaurantResultsBody');
-      var wrapEl = document.getElementById('restaurantResultsWrap');
-      var rawEl = document.getElementById('restaurantRaw');
-      var btn = document.getElementById('restaurantSubmit');
+      var statusEl = document.getElementById('restaurant-status');
+      var bodyEl = document.getElementById('restaurant-results-body');
+      var wrapEl = document.getElementById('restaurant-results-wrap');
+      var rawEl = document.getElementById('restaurant-raw');
+      var btn = document.getElementById('restaurant-submit');
 
       function setStatus(text) {
         if (statusEl) statusEl.textContent = text || '';
