@@ -109,15 +109,19 @@ def create_app() -> Flask:
         password = app.config.get("SMTP_PASSWORD", "")
         use_tls = bool(app.config.get("SMTP_USE_TLS", True))
 
-        with smtplib.SMTP(host, port, timeout=30) as smtp:
-            smtp.ehlo()
-            if use_tls:
-                smtp.starttls()
+        try:
+            with smtplib.SMTP(host, port, timeout=5) as smtp:
                 smtp.ehlo()
-            if username:
-                smtp.login(username, password)
-            smtp.send_message(msg)
-        return True
+                if use_tls:
+                    smtp.starttls()
+                    smtp.ehlo()
+                if username:
+                    smtp.login(username, password)
+                smtp.send_message(msg)
+            return True
+        except Exception as e:
+            print(f"Failed to send email to {to_email}: {e}")
+            return False
 
     def notify_watchers(new_items: list[dict]) -> None:
         if not new_items:
