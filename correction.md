@@ -193,12 +193,30 @@ Configuration requise pour tester l'envoi:
 - `SMTP_FROM`
 - `SMTP_USE_TLS`
 
-Comment tester:
+Comment tester (avec serveur SMTP local pour developpement):
 
-1. Configurer les variables SMTP
-2. Avoir un utilisateur surveillant un etablissement
-3. Declencher une synchronisation avec une nouvelle contravention
-4. Verifier la reception du courriel
+1. Lancer un serveur SMTP local:
+   ```powershell
+   python -m aiosmtpd -n -l localhost:1026
+   ```
+2. Configurer les variables SMTP pour le serveur local:
+   ```powershell
+   $env:SMTP_HOST = "localhost"
+   $env:SMTP_PORT = "1026"
+   $env:SMTP_USERNAME = ""
+   $env:SMTP_PASSWORD = ""
+   $env:SMTP_FROM = "test@localhost"
+   $env:SMTP_USE_TLS = "0"
+   $env:PUBLIC_BASE_URL = "http://localhost:5000"
+   ```
+3. Lancer l'application:
+   ```powershell
+   python .\app.py
+   ```
+4. Creer un profil utilisateur et surveiller un etablissement
+5. Aller dans le profil et cliquer sur "Envoyer un email de test"
+6. Verifier l'affichage de l'email dans le terminal du serveur SMTP (aiosmtpd)
+7. Verifier aussi le message de succes dans la console Flask: "✓ Email sent successfully to ..."
 
 ## E4
 

@@ -420,7 +420,7 @@ def create_app() -> Flask:
             flash("SMTP non configure. Verifie les variables SMTP_* et PUBLIC_BASE_URL.", "error")
             return redirect(url_for("profile_page"))
 
-        flash(f"Courriel de test envoye a {user['email']}. Verifie Mailtrap.", "success")
+        flash(f"Courriel de test envoye a {user['email']}.", "success")
         return redirect(url_for("profile_page"))
 
     @app.get("/profil/photo/<int:user_id>")
