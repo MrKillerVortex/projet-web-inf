@@ -22,7 +22,7 @@ def _normalize(text: str) -> str:
     if text is None:
         return ""
     s = str(text).strip().lower()
-    # Remove basic accents without extra deps.
+    # Supprimer les accents de base sans dépendances supplémentaires.
     s = (
         s.replace("é", "e")
         .replace("è", "e")
@@ -65,7 +65,7 @@ def _parse_money(value: str) -> float:
 
 def _parse_date_loose(value: str) -> str | None:
     """
-    Return ISO date YYYY-MM-DD, or None if unknown.
+    Retourner une date ISO AAAA-MM-JJ, ou None si inconnue.
     """
     if value is None:
         return None
@@ -73,17 +73,17 @@ def _parse_date_loose(value: str) -> str | None:
     if not raw:
         return None
 
-    # yyyy-mm-dd (or with time)
+    # aaaa-mm-jj (ou avec heure)
     m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", raw)
     if m:
         return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
 
-    # dd/mm/yyyy
+    # jj/mm/aaaa
     m = re.match(r"^(\d{2})/(\d{2})/(\d{4})", raw)
     if m:
         return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
 
-    # Last attempt: let datetime parse common formats.
+    # Dernière tentative : laisser datetime analyser les formats courants.
     for fmt in ("%Y/%m/%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
         try:
             d = dt.datetime.strptime(raw, fmt)
@@ -186,8 +186,8 @@ class SearchParams:
     status: str = ""
     category: str = ""
     city: str = ""
-    from_date: str = ""  # YYYY-MM-DD
-    to_date: str = ""  # YYYY-MM-DD
+    from_date: str = ""  # AAAA-MM-JJ
+    to_date: str = ""  # AAAA-MM-JJ
     sort: str = "date_desc"
     page: int = 1
     page_size: int = 25
@@ -203,7 +203,7 @@ def connect(db_path: str) -> sqlite3.Connection:
 
 
 def init_schema(conn: sqlite3.Connection) -> None:
-    # Create base table (new installs).
+    # Créer la table de base (nouvelles installations).
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS violations (
@@ -224,7 +224,7 @@ def init_schema(conn: sqlite3.Connection) -> None:
         """
     )
 
-    # Create indexes best-effort. Old DBs may not have columns yet; migrations handle that.
+    # Créer les index au mieux. Les anciennes BDs n'ont peut-être pas encore de colonnes; les migrations s'en occupent.
     for stmt in (
         "CREATE INDEX IF NOT EXISTS idx_violations_date ON violations(date_iso)",
         "CREATE INDEX IF NOT EXISTS idx_violations_status ON violations(status)",
@@ -294,7 +294,7 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         try:
             conn.execute(sql)
         except sqlite3.OperationalError:
-            # Column already exists or not supported in this context.
+            # La colonne existe déjà ou n'est pas supportée dans ce contexte.
             pass
 
     if "source_hash" not in cols:
@@ -304,7 +304,7 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     if "street" not in cols:
         add_col("ALTER TABLE violations ADD COLUMN street TEXT")
     if "searchable" not in cols:
-        # Must be NOT NULL because code assumes presence; default keeps migration safe.
+        # Doit être NOT NULL car le code suppose sa présence; la valeur par défaut maintient la migration sûre.
         add_col("ALTER TABLE violations ADD COLUMN searchable TEXT NOT NULL DEFAULT ''")
 
     user_cols = {
@@ -318,7 +318,7 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         if "profile_photo_mime" not in user_cols:
             add_col("ALTER TABLE users ADD COLUMN profile_photo_mime TEXT")
 
-    # Indexes for added columns (safe to run repeatedly).
+    # Index pour les colonnes ajoutées (sûr de s'exécuter à plusieurs reprises).
     try:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_violations_establishment ON violations(establishment)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_violations_owner ON violations(owner)")
@@ -326,7 +326,7 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     except sqlite3.OperationalError:
         pass
 
-    # Backfill searchable if empty.
+    # Remplir les éléments recherchables s'il est vide.
     try:
         conn.execute(
             """
@@ -738,7 +738,7 @@ def search(conn: sqlite3.Connection, params: SearchParams) -> dict:
     total_row = conn.execute(f"SELECT COUNT(1) AS n FROM violations {where_sql}", values).fetchone()
     total = int(total_row["n"])
 
-    # Stats
+    # Statistiques
     stats_row = conn.execute(
         f"SELECT COUNT(1) AS n, COUNT(DISTINCT establishment) AS est, COALESCE(SUM(amount),0) AS amt FROM violations {where_sql}",
         values,

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>INF5190 - Desabonnement</title>
+  <title>INF5190 - Désabonnement</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
@@ -20,17 +20,17 @@
 
   <div class="w3-content" style="max-width:800px; margin-top:72px;">
     <div class="w3-card w3-white w3-padding-large">
-      <h1 class="w3-text-teal">Confirmation de desabonnement</h1>
+      <h1 class="w3-text-teal">Confirmation de désabonnement</h1>
 
       {% if valid %}
       <p>Adresse courriel: <b>{{ email }}</b></p>
       <p>Etablissement: <b>{{ establishment }}</b></p>
-      <p>Confirmer la suppression de cet etablissement de la liste de surveillance.</p>
-      <button id="confirm-unsubscribe" class="w3-button w3-red">Confirmer le desabonnement</button>
+      <p>Confirmer la suppression de cet établissement de la liste de surveillance.</p>
+      <button id="confirm-unsubscribe" class="w3-button w3-red" data-token="{{ token }}">Confirmer le désabonnement</button>
       <div id="unsubscribe-message" class="w3-panel w3-hide w3-margin-top"></div>
       {% else %}
       <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
-        <p>Lien de desabonnement invalide ou expire.</p>
+        <p>Lien de désabonnement invalide ou expiré.</p>
       </div>
       {% endif %}
     </div>
@@ -42,6 +42,8 @@
       var btn = document.getElementById('confirm-unsubscribe');
       var box = document.getElementById('unsubscribe-message');
       if (!btn || !box) return;
+
+      var unsubscribeToken = btn.getAttribute('data-token');
 
       function show(kind, text) {
         box.className = 'w3-panel w3-margin-top';
@@ -58,7 +60,7 @@
         fetch('/api/desabonnement', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: {{ token|tojson }} })
+          body: JSON.stringify({ token: unsubscribeToken })
         })
           .then(function (res) {
             return res.json().then(function (data) {
@@ -67,7 +69,7 @@
             });
           })
           .then(function (data) {
-            show('ok', "Desabonnement confirme pour '" + data.establishment + "'.");
+            show('ok', "Désabonnement confirmé pour '" + data.establishment + "'.");
           })
           .catch(function (err) {
             show('err', (err && err.error) ? err.error : 'Erreur inconnue.');

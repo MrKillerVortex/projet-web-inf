@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>INF5190 - Contrevenants alimentaires (Montreal)</title>
+  <title>INF5190 - Contrevenants alimentaires (Montréal)</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
@@ -25,7 +25,7 @@
 </head>
 <body>
 
-  <!-- Navbar -->
+  <!-- Barre de navigation -->
   <div class="w3-top">
     <div class="w3-bar w3-theme w3-top w3-left-align w3-large">
       <a class="w3-bar-item w3-button w3-right w3-hide-large w3-hover-white w3-large w3-theme-l1" href="javascript:void(0)" onclick="w3_open()"><i class="fa fa-bars"></i></a>
@@ -43,7 +43,7 @@
     </div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- Barre latérale -->
   <nav class="w3-sidebar w3-bar-block w3-collapse w3-large w3-theme-l5 w3-animate-left" id="my-sidebar">
     <a href="javascript:void(0)" onclick="w3_close()" class="w3-right w3-xlarge w3-padding-large w3-hover-black w3-hide-large" title="Fermer">
       <i class="fa fa-remove"></i>
@@ -60,27 +60,27 @@
     {% else %}
     <a class="w3-bar-item w3-button w3-hover-black" href="/connexion" onclick="w3_close()">Connexion</a>
     {% endif %}
-    <a class="w3-bar-item w3-button w3-hover-black" href="#donnees" onclick="w3_close()">Donnees</a>
+    <a class="w3-bar-item w3-button w3-hover-black" href="#donnees" onclick="w3_close()">Données</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="/doc" onclick="w3_close()">Doc RAML</a>
   </nav>
 
-  <!-- Overlay effect when opening sidebar on small screens -->
+  <!-- Effet de superposition lors de l'ouverture de la barre latérale sur petits écrans -->
   <div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="Fermer le menu" id="my-overlay"></div>
 
-  <!-- Main content -->
+  <!-- Contenu principal -->
   <div class="w3-main" style="margin-left:250px">
 
     <header id="accueil" class="hero w3-container w3-padding-64">
       <div class="w3-content">
         <p class="w3-opacity">Projet de session</p>
         <h1 class="w3-text-teal hero-title">Constats d'infraction lors d'inspections alimentaires</h1>
-        <p class="hero-subtitle">Ville de Montreal. Donnees ouvertes. Flask + SQLite. Recherche et services REST.</p>
+        <p class="hero-subtitle">Ville de Montréal. Données ouvertes. Flask + SQLite. Recherche et services REST.</p>
         <div class="w3-row-padding w3-margin-top">
           <div class="w3-third">
-            <a class="w3-button w3-teal w3-block w3-padding-large" href="#recherche"><i class="fa fa-search w3-margin-right"></i>Aller a la recherche</a>
+            <a class="w3-button w3-teal w3-block w3-padding-large" href="#recherche"><i class="fa fa-search w3-margin-right"></i>Aller à la recherche</a>
           </div>
           <div class="w3-third">
-            <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/inscription"><i class="fa fa-user-plus w3-margin-right"></i>Creer un profil</a>
+            <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/inscription"><i class="fa fa-user-plus w3-margin-right"></i>Créer un profil</a>
           </div>
           <div class="w3-third">
             <a class="w3-button w3-theme-l1 w3-block w3-padding-large" href="/doc"><i class="fa fa-file-text-o w3-margin-right"></i>Voir la doc RAML</a>
@@ -93,12 +93,12 @@
       <section id="contexte" class="w3-container w3-padding-64">
         <div class="w3-content">
           <h2 class="w3-text-teal">Contexte</h2>
-          <p>Application Flask pour consulter des donnees ouvertes de la Ville de Montreal: etablissements ayant recu des constats d'infraction lors d'inspections alimentaires. Les donnees sont stockees dans SQLite et exposees via des services REST.</p>
+          <p>Application Flask pour consulter des données ouvertes de la Ville de Montréal: établissements ayant reçu des constats d'infraction lors d'inspections alimentaires. Les données sont stockées dans SQLite et exposées via des services REST.</p>
           <div class="w3-row-padding w3-margin-top">
             <div class="w3-half">
               <div class="w3-card w3-padding">
                 <h3 class="w3-text-teal"><i class="fa fa-database w3-margin-right"></i>Base SQLite</h3>
-                <p class="hint">Schema: <span class="mono">db/db.sql</span>. DB vide fournie: <span class="mono">db/violations_empty.sqlite3</span>.</p>
+                <p class="hint">Schéma: <span class="mono">db/db.sql</span>. DB vide fournie: <span class="mono">db/violations_empty.sqlite3</span>.</p>
               </div>
             </div>
             <div class="w3-half">
@@ -118,15 +118,15 @@
       <section id="recherche" class="w3-container w3-padding-64">
         <div class="w3-content">
           <h2 class="w3-text-teal">Recherche</h2>
-          <p class="hint">Recherche par nom d'etablissement, proprietaire et rue. Les resultats s'affichent sur une nouvelle page.</p>
+          <p class="hint">Recherche par nom d'établissement, propriétaire et rue. Les résultats s'affichent sur une nouvelle page.</p>
 
           {% if not db_ready %}
             <div class="w3-panel w3-pale-red w3-leftbar w3-border-red">
-              <p><b>Base de donnees non prete.</b></p>
+              <p><b>Base de données non prête.</b></p>
               <p class="w3-small">{{ db_reason }}</p>
               <p class="w3-small">
-                Etapes typiques:
-                1) creer la DB avec <span class="mono">db/db.sql</span>
+                Étapes typiques:
+                1) créer la DB avec <span class="mono">db/db.sql</span>
                 2) importer avec <span class="mono">python import_violations.py --db ...</span>
               </p>
             </div>
@@ -136,12 +136,12 @@
             <form class="w3-container" method="get" action="/search">
               <div class="w3-row-padding">
                 <div class="w3-third">
-                  <label for="establishment"><b>Nom d'etablissement</b></label>
+                  <label for="establishment"><b>Nom d'établissement</b></label>
                   <input class="w3-input w3-border" id="establishment" name="establishment" type="text" placeholder="Ex: Restaurant, Boulangerie, Nom exact">
                 </div>
                 <div class="w3-third">
-                  <label for="owner"><b>Proprietaire</b></label>
-                  <input class="w3-input w3-border" id="owner" name="owner" type="text" placeholder="Ex: Nom du proprietaire">
+                  <label for="owner"><b>Propriétaire</b></label>
+                  <input class="w3-input w3-border" id="owner" name="owner" type="text" placeholder="Ex: Nom du propriétaire">
                 </div>
                 <div class="w3-third">
                   <label for="street"><b>Rue</b></label>
@@ -159,7 +159,7 @@
       <section id="dates" class="w3-container w3-padding-64">
         <div class="w3-content">
           <h2 class="w3-text-teal">Recherche rapide (dates)</h2>
-          <p class="hint w3-small">Ajax vers <span class="mono">/contrevenants</span> (mode <span class="mono">counts</span>). Tableau: etablissement + nombre de contraventions.</p>
+          <p class="hint w3-small">Ajax vers <span class="mono">/contrevenants</span> (mode <span class="mono">counts</span>). Tableau: établissement + nombre de contraventions.</p>
 
           <div class="w3-card w3-padding w3-margin-top">
             <form id="quick-dates-form" class="w3-container">
@@ -184,7 +184,7 @@
                 <table class="w3-table w3-striped w3-small">
                   <thead>
                     <tr class="w3-theme-l4">
-                      <th>Etablissement</th>
+                      <th>Établissement</th>
                       <th class="w3-right-align">Nombre</th>
                     </tr>
                   </thead>
@@ -199,7 +199,7 @@
       <section id="restaurant" class="w3-container w3-padding-64">
         <div class="w3-content">
           <h2 class="w3-text-teal">Recherche par restaurant</h2>
-          <p class="hint w3-small">Liste deroulante (prechargee). Ajax vers <span class="mono">/infractions</span> pour afficher les infractions du restaurant.</p>
+          <p class="hint w3-small">Liste déroulante (préchargée). Ajax vers <span class="mono">/infractions</span> pour afficher les infractions du restaurant.</p>
 
           <div class="w3-card w3-padding w3-margin-top">
             <form id="restaurant-form" class="w3-container">
@@ -219,7 +219,7 @@
                   <thead>
                     <tr class="w3-theme-l4">
                       <th>Date</th>
-                      <th>Categorie</th>
+                      <th>Catégorie</th>
                       <th>Description</th>
                       <th class="w3-right-align">Montant</th>
                       <th>Statut</th>
@@ -230,7 +230,7 @@
                 </table>
               </div>
               <details class="w3-margin-top">
-                <summary class="w3-small">Afficher les donnees completes (JSON)</summary>
+                <summary class="w3-small">Afficher les données complètes (JSON)</summary>
                 <pre id="restaurant-raw" class="w3-small"></pre>
               </details>
             </div>
@@ -240,8 +240,8 @@
 
       <section id="donnees" class="w3-container w3-padding-64">
         <div class="w3-content">
-          <h2 class="w3-text-teal">Donnees</h2>
-          <p class="hint">CSV officiel (telecharge par le script d'import ou la sync quotidienne).</p>
+          <h2 class="w3-text-teal">Données</h2>
+          <p class="hint">CSV officiel (téléchargé par le script d'import ou la sync quotidienne).</p>
           <div class="w3-card w3-padding w3-margin-top">
             <p class="w3-small w3-opacity">
               Source CSV:
@@ -258,15 +258,15 @@
         <h4>INF5190 - Projet de session</h4>
       </div>
       <div class="w3-container w3-theme-l1">
-        <p>Template: <a href="https://www.w3schools.com/w3css/default.asp" target="_blank" rel="noopener">w3.css</a>. Donnees: <a href="https://data.montreal.ca/" target="_blank" rel="noopener">data.montreal.ca</a></p>
+        <p>Template: <a href="https://www.w3schools.com/w3css/default.asp" target="_blank" rel="noopener">w3.css</a>. Données: <a href="https://data.montreal.ca/" target="_blank" rel="noopener">data.montreal.ca</a></p>
       </div>
     </footer>
 
-    <!-- END MAIN -->
+    <!-- FIN CONTENU PRINCIPAL -->
   </div>
 
   <script>
-    // Sidebar handlers (W3Schools pattern)
+    // Gestionnaires de barre latérale (motif W3Schools)
     var mySidebar = document.getElementById("my-sidebar");
     var overlayBg = document.getElementById("my-overlay");
 
@@ -331,7 +331,7 @@
         var du = (duEl && duEl.value) ? duEl.value : '';
         var au = (auEl && auEl.value) ? auEl.value : '';
         if (!du || !au) {
-          setStatus('Entre deux dates.');
+          setStatus('Entrez deux dates.');
           return;
         }
 
@@ -348,7 +348,7 @@
           })
           .then(function (rows) {
             if (!Array.isArray(rows)) rows = [];
-            setStatus(rows.length ? ('OK: ' + rows.length + ' etablissement(s).') : 'Aucun resultat.');
+            setStatus(rows.length ? ('OK: ' + rows.length + ' établissement(s).') : 'Aucun résultat.');
             renderRows(rows);
           })
           .catch(function (err) {
@@ -403,7 +403,7 @@
               opt.textContent = items[i];
               selectEl.appendChild(opt);
             }
-            setStatus(items.length ? (items.length + ' restaurant(s).') : 'Aucun restaurant trouve.');
+            setStatus(items.length ? (items.length + ' restaurant(s).') : 'Aucun restaurant trouvé.');
           })
           .catch(function (err) {
             setStatus('Erreur: ' + (err && err.message ? err.message : String(err)));

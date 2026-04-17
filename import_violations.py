@@ -21,7 +21,7 @@ def normalize(text: str) -> str:
     if text is None:
         return ""
     s = str(text).strip().lower()
-    # Minimal accent folding, no external deps.
+    # Pliage minimal d'accents, pas de dépendances externes.
     s = (
         s.replace("é", "e")
         .replace("è", "e")
@@ -156,7 +156,7 @@ def import_rows(conn: sqlite3.Connection, raw_rows: list[dict]) -> tuple[int, in
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
     else:
-        # Fallback for older schemas: insert core fields only.
+        # Secours pour les anciens schémas: insérer les champs principaux seulement.
         insert_sql = """
             INSERT OR IGNORE INTO violations (
               source_hash, date_iso, establishment, category, description, amount, status, city, raw_json

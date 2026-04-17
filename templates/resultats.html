@@ -25,7 +25,7 @@
 
   <div class="w3-content" style="max-width:1100px; margin-top:72px;">
     <div class="w3-card w3-white w3-padding-large">
-      <h1 class="w3-text-teal">Resultats</h1>
+      <h1 class="w3-text-teal">Résultats</h1>
       <p class="w3-small w3-opacity">
         Filtres:
         etablissement=<span class="mono">{{ establishment or "-" }}</span>,
@@ -35,11 +35,11 @@
 
       {% if no_criteria %}
         <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-yellow">
-          <p>Entre au moins un critere de recherche (etablissement, proprietaire ou rue).</p>
+          <p>Entrez au moins un critère de recherche (établissement, propriétaire ou rue).</p>
         </div>
       {% elif results|length == 0 %}
         <div class="w3-panel w3-pale-yellow w3-leftbar w3-border-yellow">
-          <p>Aucun resultat.</p>
+          <p>Aucun résultat.</p>
         </div>
       {% else %}
         <div class="w3-panel w3-pale-blue w3-leftbar w3-border-blue">

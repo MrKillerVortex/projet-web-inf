@@ -52,7 +52,7 @@ def create_app() -> Flask:
     app.config.from_object(AppConfig)
     app.secret_key = app.config["SECRET_KEY"]
 
-    # Use instance/ for sqlite (recommended by Flask).
+    # Utilisez instance/ pour sqlite (recommandé par Flask).
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     if not app.config["DATABASE"]:
         app.config["DATABASE"] = os.path.join(app.instance_path, "violations.sqlite3")
@@ -95,7 +95,7 @@ def create_app() -> Flask:
         host = app.config.get("SMTP_HOST", "")
         sender = app.config.get("SMTP_FROM", "")
         if not host or not sender:
-            print(f"SMTP not configured; skipping email to {to_email}")
+            print(f"SMTP non configuré; omission de l'envoi à {to_email}")
             return False
 
         msg = EmailMessage()
@@ -120,7 +120,7 @@ def create_app() -> Flask:
                 smtp.send_message(msg)
             return True
         except Exception as e:
-            print(f"Failed to send email to {to_email}: {e}")
+            print(f"Impossible d'envoyer le courriel à {to_email}: {e}")
             return False
 
     def notify_watchers(new_items: list[dict]) -> None:
@@ -176,14 +176,14 @@ def create_app() -> Flask:
                 try:
                     send_notification_email(user["email"], subject, body)
                 except Exception as exc:
-                    print(f"Email send failed for {user['email']}: {exc}")
+                    print(f"Envoi du courriel échoué pour {user['email']}: {exc}")
 
     def ensure_database_bootstrap() -> None:
         """
-        Bootstrap the SQLite database on first startup.
+        Initialiser la base de données SQLite au premier démarrage.
 
-        Railway does not expose an easy shell in every plan/UI path, so the app can
-        self-initialize if the DB file or the table data is missing.
+        Railway n'expose pas de shell facile dans chaque plan/chemin UI, donc l'application peut
+        s'auto-initialiser si le fichier BD ou les données de la table sont manquants.
         """
         db_path = Path(app.config["DATABASE"])
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -225,7 +225,7 @@ def create_app() -> Flask:
                 ).fetchone()
                 if not row:
                     return False, "Table 'violations' absente. Cree la DB avec db/db.sql puis importe le CSV."
-                # Best-effort migration for older DBs.
+                # Migration au mieux pour les anciennes BDs.
                 dbmod.ensure_schema(conn)
                 if not dbmod.table_has_data(conn):
                     return False, "Base initialisee mais aucune donnee n'a pu etre importee."
@@ -239,7 +239,7 @@ def create_app() -> Flask:
         s = (value or "").strip()
         if not s:
             return None
-        # ISO 8601 date (YYYY-MM-DD)
+        # Date ISO 8601 (AAAA-MM-JJ)
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
             return None
         return s
@@ -265,10 +265,10 @@ def create_app() -> Flask:
         if not app.config.get("SCHEDULER_ENABLED", True):
             return
         if BackgroundScheduler is None or CronTrigger is None:
-            # Dependency not installed; keep app usable.
+            # Dépendance non installée; maintenir l'application utilisable.
             return
 
-        # Avoid double-scheduling when Flask debug reloader is enabled.
+        # Éviter la double planification quand le rechargeur de debug Flask est activé.
         if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
             return
 
@@ -285,7 +285,7 @@ def create_app() -> Flask:
         )
         scheduler.start()
 
-        # Ensure clean shutdown.
+        # Assurer l'arrêt propre.
         atexit.register(lambda: scheduler.shutdown(wait=False))
 
     start_scheduler()
@@ -293,15 +293,15 @@ def create_app() -> Flask:
     @app.get("/")
     def index():
         ready, reason = db_ready()
-        return render_template("index.html", db_ready=ready, db_reason=reason, user=current_user())
+        return render_template("accueil.html", db_ready=ready, db_reason=reason, user=current_user())
 
     @app.get("/inscription")
     def signup_page():
-        return render_template("signup.html", user=current_user())
+        return render_template("inscription.html", user=current_user())
 
     @app.get("/connexion")
     def login_page():
-        return render_template("login.html", error="", user=current_user())
+        return render_template("connexion.html", error="", user=current_user())
 
     @app.post("/connexion")
     def login_submit():
@@ -330,7 +330,7 @@ def create_app() -> Flask:
         user = current_user()
         if not user:
             return redirect(url_for("login_page"))
-        return render_template("profile.html", user=user)
+        return render_template("profil.html", user=user)
 
     @app.post("/profil/watchlist")
     def profile_watchlist_submit():
@@ -441,7 +441,7 @@ def create_app() -> Flask:
         payload = parse_unsubscribe_token(token)
         if not payload:
             return render_template(
-                "unsubscribe.html",
+                "desabonnement.html",
                 valid=False,
                 token="",
                 establishment="",
@@ -455,7 +455,7 @@ def create_app() -> Flask:
             conn.close()
         if not user:
             return render_template(
-                "unsubscribe.html",
+                "desabonnement.html",
                 valid=False,
                 token="",
                 establishment="",
@@ -463,7 +463,7 @@ def create_app() -> Flask:
             ), 404
 
         return render_template(
-            "unsubscribe.html",
+            "desabonnement.html",
             valid=True,
             token=token,
             establishment=payload["establishment"],
@@ -496,7 +496,7 @@ def create_app() -> Flask:
     def search_page():
         ready, reason = db_ready()
         if not ready:
-            return render_template("index.html", db_ready=False, db_reason=reason), 500
+            return render_template("accueil.html", db_ready=False, db_reason=reason), 500
 
         establishment = request.args.get("establishment", "").strip()
         owner = request.args.get("owner", "").strip()
@@ -513,7 +513,7 @@ def create_app() -> Flask:
                 conn.close()
 
         return render_template(
-            "search_results.html",
+            "resultats.html",
             establishment=establishment,
             owner=owner,
             street=street,
@@ -559,8 +559,8 @@ def create_app() -> Flask:
     @app.get("/contrevenants")
     def contrevenants_between_dates():
         """
-        REST: GET /contrevenants?du=YYYY-MM-DD&au=YYYY-MM-DD
-        Returns JSON list of contraventions between two ISO 8601 dates (inclusive).
+        REST: GET /contrevenants?du=AAAA-MM-JJ&au=AAAA-MM-JJ
+        Retourner une liste JSON de contraventions entre deux dates ISO 8601 (incluses).
         """
         ready, reason = db_ready()
         if not ready:
@@ -664,7 +664,7 @@ def create_app() -> Flask:
     def create_user_profile():
         """
         REST: POST /utilisateurs
-        Creates a user profile from a JSON document validated with json-schema.
+        Créer un profil utilisateur à partir d'un document JSON validé avec json-schema.
         """
         data = request.get_json(silent=True)
         if data is None:
@@ -710,11 +710,11 @@ def create_app() -> Flask:
             "/utilisateurs",
         }:
             return jsonify({"error": exc.description}), exc.code
-        return render_template("error.html", title=f"Erreur {exc.code}", message=exc.description), exc.code
+        return render_template("erreur.html", title=f"Erreur {exc.code}", message=exc.description), exc.code
 
     @app.errorhandler(Exception)
     def handle_unexpected_exception(exc: Exception):
-        print(f"Unhandled application error: {exc}")
+        print(f"Erreur d'application non gérée: {exc}")
         if request.path.startswith("/api/") or request.path in {
             "/contrevenants",
             "/restaurants",

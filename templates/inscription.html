@@ -25,7 +25,7 @@
 
   <div class="w3-content" style="max-width:900px; margin-top:72px;">
     <div class="w3-card w3-white w3-padding-large">
-      <h1 class="w3-text-teal">Creer un profil</h1>
+      <h1 class="w3-text-teal">Créer un profil</h1>
       <p class="w3-small w3-opacity">Cette page invoque le service REST `POST /utilisateurs`.</p>
 
       <form id="signup-form" class="w3-container">
@@ -35,13 +35,13 @@
         <label for="courriel"><b>Adresse courriel</b></label>
         <input id="courriel" class="w3-input w3-border w3-margin-bottom" type="email" required>
 
-        <label for="etablissements_surveille"><b>Etablissements a surveiller</b></label>
-        <textarea id="etablissements_surveille" class="w3-input w3-border w3-margin-bottom" rows="6" placeholder="Un etablissement par ligne"></textarea>
+        <label for="etablissements_surveille"><b>Établissements à surveiller</b></label>
+        <textarea id="etablissements_surveille" class="w3-input w3-border w3-margin-bottom" rows="6" placeholder="Un établissement par ligne"></textarea>
 
         <label for="mot_de_passe"><b>Mot de passe</b></label>
         <input id="mot_de_passe" class="w3-input w3-border w3-margin-bottom" type="password" minlength="8" required>
 
-        <button class="w3-button w3-teal" type="submit">Creer le profil</button>
+        <button class="w3-button w3-teal" type="submit">Créer le profil</button>
       </form>
 
       <div id="signup-message" class="w3-panel w3-hide w3-margin-top"></div>
@@ -89,7 +89,7 @@
           })
           .then(function () {
             form.reset();
-            show('ok', 'Profil cree. Tu peux maintenant te connecter.');
+            show('ok', 'Profil créé. Tu peux maintenant te connecter.');
           })
           .catch(function (err) {
             show('err', (err && (err.details || err.error)) ? (err.details || err.error) : 'Erreur inconnue.');

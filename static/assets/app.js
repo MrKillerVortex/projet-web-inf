@@ -59,7 +59,7 @@
   function parseMoney(value) {
     const s = String(value ?? '').trim();
     if (!s) return 0;
-    // Examples seen in open data often include spaces, $ or commas.
+    // Les exemples vus dans les données ouvertes incluent souvent des espaces, $ ou des virgules.
     const cleaned = s.replace(/[^0-9,.-]/g, '').replace(',', '.');
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : 0;
@@ -72,7 +72,7 @@
     const d1 = new Date(raw);
     if (!Number.isNaN(d1.getTime())) return d1;
 
-    // yyyy-mm-dd
+    // aaaa-mm-jj
     const m1 = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (m1) {
       const y = Number(m1[1]);
@@ -82,7 +82,7 @@
       if (!Number.isNaN(d2.getTime())) return d2;
     }
 
-    // dd/mm/yyyy
+    // jj/mm/aaaa
     const m2 = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
     if (m2) {
       const d = Number(m2[1]);

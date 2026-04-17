@@ -19,7 +19,7 @@
       <a href="/" class="w3-bar-item w3-button w3-theme-l1">Accueil</a>
       <a href="/profil" class="w3-bar-item w3-button w3-hover-white">Profil</a>
       <form method="post" action="/deconnexion" style="display:inline;">
-        <button class="w3-bar-item w3-button w3-hover-white" type="submit">Deconnexion</button>
+        <button class="w3-bar-item w3-button w3-hover-white" type="submit">Déconnexion</button>
       </form>
     </div>
   </div>
@@ -51,19 +51,19 @@
 
             <form class="w3-margin-top" method="post" action="/profil/photo" enctype="multipart/form-data">
               <input class="w3-input w3-border" type="file" name="photo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
-              <button class="w3-button w3-teal w3-margin-top" type="submit">Televerser</button>
+              <button class="w3-button w3-teal w3-margin-top" type="submit">Téléverser</button>
             </form>
-            <p class="w3-small w3-opacity">Formats acceptes: JPG, PNG</p>
+            <p class="w3-small w3-opacity">Formats acceptés: JPG, PNG</p>
           </div>
         </div>
 
         <div class="w3-twothird">
           <div class="w3-card w3-padding">
-            <h3 class="w3-text-teal">Etablissements a surveiller</h3>
+            <h3 class="w3-text-teal">Établissements à surveiller</h3>
             <form method="post" action="/profil/watchlist">
               <textarea class="w3-input w3-border" name="watchlist" rows="10" placeholder="Un etablissement par ligne">{% for item in user.watchlist %}{{ item }}{% if not loop.last %}
 {% endif %}{% endfor %}</textarea>
-              <button class="w3-button w3-teal w3-margin-top" type="submit">Mettre a jour</button>
+              <button class="w3-button w3-teal w3-margin-top" type="submit">Mettre à jour</button>
             </form>
           </div>
           <div class="w3-card w3-padding w3-margin-top">
