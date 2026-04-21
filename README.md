@@ -1,4 +1,5 @@
 # INF5190 - Projet de session (Montreal - inspections alimentaires)
+# Shawn Fortin - FORS83040202 
 
 ## Technologies et templates
 
@@ -50,7 +51,7 @@ python .\app.py
 
 Puis ouvre `http://127.0.0.1:5000/`.
 
-- Page: `templates/index.html`
+- Page: `templates/accueil.html`
 - Statics: `static/assets/*`
 - API: `GET /api/facets`, `GET /api/violations`
  - REST: `GET /contrevenants?du=YYYY-MM-DD&au=YYYY-MM-DD`
@@ -59,7 +60,7 @@ Puis ouvre `http://127.0.0.1:5000/`.
 Par defaut, l'app utilise `instance/violations.sqlite3`. Pour pointer vers une autre base:
 
 ```powershell
-$env:INF5190_DB_PATH = ".\\db\\violations_test.sqlite3"
+$env:INF5190_DB_PATH = ".\\db\\violations_empty.sqlite3"
 python .\\app.py
 ```
 

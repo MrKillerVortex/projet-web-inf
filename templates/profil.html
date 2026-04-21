@@ -40,7 +40,7 @@
       <div class="w3-row-padding">
         <div class="w3-third">
           <div class="w3-card w3-padding">
-            <h3 class="w3-text-teal">Photo de profil</h3>
+            <h2 class="w3-text-teal">Photo de profil</h2>
             {% if user.profile_photo_mime %}
             <img class="avatar" src="{{ url_for('profile_photo_view', user_id=user.id) }}" alt="Photo de profil">
             {% else %}
@@ -59,7 +59,7 @@
 
         <div class="w3-twothird">
           <div class="w3-card w3-padding">
-            <h3 class="w3-text-teal">Établissements à surveiller</h3>
+            <h2 class="w3-text-teal">Établissements à surveiller</h2>
             <form method="post" action="/profil/watchlist">
               <textarea class="w3-input w3-border" name="watchlist" rows="10" placeholder="Un etablissement par ligne">{% for item in user.watchlist %}{{ item }}{% if not loop.last %}
 {% endif %}{% endfor %}</textarea>
@@ -67,7 +67,7 @@
             </form>
           </div>
           <div class="w3-card w3-padding w3-margin-top">
-            <h3 class="w3-text-teal">Test du courriel</h3>
+            <h2 class="w3-text-teal">Test du courriel</h2>
             <p class="w3-small w3-opacity">Envoie un courriel de test a l'adresse du profil pour le premier etablissement surveille.</p>
             <form method="post" action="/profil/test-email">
               <button class="w3-button w3-theme" type="submit">Envoyer un courriel de test</button>

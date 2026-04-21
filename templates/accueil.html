@@ -50,7 +50,6 @@
     </a>
     <h4 class="w3-bar-item"><b>Menu</b></h4>
     <a class="w3-bar-item w3-button w3-hover-black" href="#accueil" onclick="w3_close()">Accueil</a>
-    <a class="w3-bar-item w3-button w3-hover-black" href="#contexte" onclick="w3_close()">Contexte</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="#recherche" onclick="w3_close()">Recherche</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="#dates" onclick="w3_close()">Recherche (dates)</a>
     <a class="w3-bar-item w3-button w3-hover-black" href="#restaurant" onclick="w3_close()">Recherche (restaurant)</a>
@@ -90,30 +89,6 @@
     </header>
 
     <main>
-      <section id="contexte" class="w3-container w3-padding-64">
-        <div class="w3-content">
-          <h2 class="w3-text-teal">Contexte</h2>
-          <p>Application Flask pour consulter des données ouvertes de la Ville de Montréal: établissements ayant reçu des constats d'infraction lors d'inspections alimentaires. Les données sont stockées dans SQLite et exposées via des services REST.</p>
-          <div class="w3-row-padding w3-margin-top">
-            <div class="w3-half">
-              <div class="w3-card w3-padding">
-                <h3 class="w3-text-teal"><i class="fa fa-database w3-margin-right"></i>Base SQLite</h3>
-                <p class="hint">Schéma: <span class="mono">db/db.sql</span>. DB vide fournie: <span class="mono">db/violations_empty.sqlite3</span>.</p>
-              </div>
-            </div>
-            <div class="w3-half">
-              <div class="w3-card w3-padding">
-                <h3 class="w3-text-teal"><i class="fa fa-link w3-margin-right"></i>Services</h3>
-                <ul class="w3-ul">
-                  <li>Recherche classique (page <span class="mono">/search</span>)</li>
-                  <li>REST par dates: <span class="mono">/contrevenants?du=...&amp;au=...</span></li>
-                  <li>Dropdown restaurants + infractions: <span class="mono">/restaurants</span>, <span class="mono">/infractions</span></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section id="recherche" class="w3-container w3-padding-64">
         <div class="w3-content">
@@ -255,7 +230,7 @@
 
     <footer id="my-footer">
       <div class="w3-container w3-theme-l2 w3-padding-32">
-        <h4>INF5190 - Projet de session</h4>
+        <p class="w3-large">INF5190 - Projet de session</p>
       </div>
       <div class="w3-container w3-theme-l1">
         <p>Template: <a href="https://www.w3schools.com/w3css/default.asp" target="_blank" rel="noopener">w3.css</a>. Données: <a href="https://data.montreal.ca/" target="_blank" rel="noopener">data.montreal.ca</a></p>
