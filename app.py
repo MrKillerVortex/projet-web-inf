@@ -53,6 +53,7 @@ def create_app() -> Flask:
     app.secret_key = app.config["SECRET_KEY"]
 
     # Utilisez instance/ pour sqlite (recommandé par Flask).
+    app.instance_path = "/tmp/instance"
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     if not app.config["DATABASE"]:
         app.config["DATABASE"] = os.path.join(app.instance_path, "violations.sqlite3")
